@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Haroon Zarai Markaz</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={darkMode:'media'}</script>
+<style type="text/tailwindcss">
+.card{@apply rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800}
+.inp{@apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900}
+.btn{@apply rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800}
+.btn2{@apply rounded-lg border border-stone-300 px-3 py-1.5 text-sm dark:border-stone-600}
+.th{@apply px-3 py-2 text-left text-xs font-semibold uppercase text-stone-500}
+.td{@apply px-3 py-2 whitespace-nowrap}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mq{animation:mq 28s linear infinite;width:max-content}
+.mq:hover{animation-play-state:paused}
+</style>
+</head>
+<body class="bg-stone-50 text-stone-800 dark:bg-stone-900 dark:text-stone-100">
+
+<div class="overflow-hidden bg-green-800 py-2 text-sm text-white">
+  <div id="ticker" class="mq flex gap-10 whitespace-nowrap"><span><b>Gandum</b> Rs. 4200/Mann</span><span><b>DAP</b> Rs. 12000/bag</span><span><b>Urea</b> Rs. 6000/bag</span></div>
+</div>
+
+<header class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+  <div>
+    <h1 class="text-xl font-bold text-green-800 dark:text-green-400">🌾 Haroon Zarai Markaz</h1>
+    <p class="text-xs text-stone-500">Pesticides · Fertilizers · Seeds · Khata</p>
+  </div>
+  <div id="authbar"></div>
+</header>
+
+<main class="mx-auto max-w-5xl space-y-6 px-4 pb-16">
+
+<!-- HOME / PRODUCTS -->
+<section id="v-home" class="space-y-6">
+  <section id="prodsec">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="text-xl font-bold">Hamare Products (<span id="pcount">0</span>)</h2>
+      <input class="inp !w-48" placeholder="Search product..." oninput="pq=this.value.toLowerCase();renderProducts()">
+    </div>
+    <div id="pcats" class="mt-3 flex flex-wrap gap-2"></div>
+    <div id="pgrid" class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4"></div>
+  </section>
+  <div class="card flex flex-wrap items-center justify-between gap-3">
+    <div><b>Apna Khata dekhein</b><p class="text-sm text-stone-500">Admin panel ya customer login ke liye neeche click karein.</p></div>
+    <button class="btn" onclick="openLogin()">Admin / Khata Login</button>
+  </div>
+</section>
+
+<!-- ADMIN PANEL -->
+<section id="v-admin" class="hidden space-y-6"></section>
+</main>
+
+<!-- Login modal -->
+<div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+  <div class="card w-full max-w-sm">
+    <h3 id="mtitle" class="mb-3 text-lg font-bold">Login</h3>
+    <div class="space-y-3">
+      <input id="l-pass" type="password" class="inp" placeholder="Enter Admin Password">
+    </div>
+    <p id="lerr" class="mt-2 hidden text-sm text-red-600"></p>
+    <div class="mt-4 flex gap-2">
+      <button class="btn flex-1" onclick="doLogin()">Login</button>
+      <button class="btn2" onclick="closeLogin()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE_URL = `http://${window.location.hostname}:5000/api`;
+let db = { products: [], customers: [], transactions: [] };
+let me = null;
+const SECRET = '#admin-secret-panel';
+
+const $ = id => document.getElementById(id);
+const rs = n => 'Rs. ' + Number(n).toLocaleString('en-PK');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bal = fid => db.transactions.filter(t => t.fid == fid).reduce((a,t) => a + (t.type === 'udhar' ? t.amount : -t.amount), 0);
+
+async function loadData() {
+    try {
+        const [resP, resC, resT] = await Promise.all([
+            fetch(`${BASE_URL}/products`),
+            fetch(`${BASE_URL}/customers`),
+            fetch(`${BASE_URL}/transactions`)
+        ]);
+        db.products = (await resP.json()).data || [];
+        db.customers = (await resC.json()).data || [];
+        db.transactions = (await resT.json()).data || [];
+        renderProducts();
+        renderAuth();
+    } catch (e) { console.error("Error loading data", e); }
+}
+
+function renderAuth() {
+  $('authbar').innerHTML = me 
+    ? `<button class="btn2" onclick="logout()">Logout</button>` 
+    : `<button class="btn" onclick="openLogin()">Admin Login</button>`;
+}
+function openLogin() { $('modal').classList.remove('hidden'); $('modal').classList.add('flex'); $('lerr').classList.add('hidden'); }
+function closeLogin() { $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); }
+
+function doLogin() {
+  if($('l-pass').value === 'admin123') {
+    me = { role: 'admin' };
+    closeLogin();
+    route();
+  } else {
+    $('lerr').textContent = 'Ghalat password'; $('lerr').classList.remove('hidden');
+  }
+}
+function logout() { me = null; route(); }
+
+// Products display with image support
+const cats = ['Pesticide', 'Fertilizer', 'Seed', 'Other'];
+let pcat = 'All', pq = '';
+
+const pcard = p => `
+<div class="card overflow-hidden !p-0">
+  <div class="flex h-32 items-center justify-center bg-stone-100 text-4xl dark:bg-stone-700">
+    ${p.image ? `<img src="${p.image}" alt="" class="h-full w-full object-cover">` : '📦'}
+  </div>
+  <div class="p-3">
+    <div class="text-xs text-stone-500">${esc(p.category)}</div>
+    <div class="font-semibold">${esc(p.name)}</div>
+    <div class="text-sm text-green-700">Rs. ${p.price} | Stock: ${p.stock_quantity}</div>
+  </div>
+</div>`;
+
+function renderProducts() {
+  if(!$('pgrid')) return;
+  $('pcount').textContent = db.products.length;
+  $('pcats').innerHTML = ['All', ...cats].map(c => `<button class="${pcat===c?'btn !py-1.5':'btn2'}" onclick="pcat='${c}';renderProducts()">${c}</button>`).join('');
+  const list = db.products.filter(p => (pcat === 'All' || p.category === pcat) && p.name.toLowerCase().includes(pq));
+  $('pgrid').innerHTML = list.map(pcard).join('') || '<p class="col-span-full text-sm text-stone-500">Koi product nahi mila.</p>';
+}
+
+/* ---------- Admin Panel with Photo Upload & Khata ---------- */
+function renderAdmin() {
+  const custOpts = db.customers.map(c => `<option value="${c.id}">${c.name} (${c.phone})</option>`).join('');
+  $('v-admin').innerHTML = `
+  <h2 class="text-xl font-bold">Shopkeeper Admin Panel</h2>
+  
+  <div class="grid gap-4 md:grid-cols-2">
+    <!-- Add Product with Photo -->
+    <form class="card space-y-3" onsubmit="addProduct(event)">
+      <b>Naya Product aur Photo Add Karein</b>
+      <input name="name" class="inp" placeholder="Product name" required>
+      <select name="cat" class="inp">${cats.map(c => `<option>${c}</option>`).join('')}</select>
+      <input name="price" type="number" min="0" class="inp" placeholder="Price Rs." required>
+      <input name="stock" type="number" min="0" class="inp" placeholder="Stock Quantity" required>
+      <label class="block text-xs text-stone-500">Product Photo: <input name="photo" type="file" accept="image/*" class="inp mt-1"></label>
+      <button class="btn w-full">Add Product</button>
+    </form>
+
+    <!-- Add Transaction / Khata Entry -->
+    <form class="card space-y-3" onsubmit="addTxn(event)">
+      <b>Khata Entry / Sale Record Karein</b>
+      <select name="customer_id" class="inp" required>${custOpts}</select>
+      <select name="type" class="inp"><option value="udhar">Udhar (Maal diya)</option><option value="payment">Payment (Cash mili)</option></select>
+      <input name="description" class="inp" placeholder="Detail e.g. DAP 2 bags" required>
+      <input name="amount" type="number" min="1" class="inp" placeholder="Amount (Rs.)" required>
+      <button class="btn w-full">Save Entry</button>
+    </form>
+  </div>
+
+  <!-- Products List -->
+  <div class="card max-h-72 overflow-y-auto p-0">
+    <div class="p-4"><b>Products List (${db.products.length})</b></div>
+    <div class="divide-y divide-stone-100">${db.products.map(p => `
+      <div class="flex items-center gap-3 px-4 py-2 text-sm">
+        <div class="h-10 w-10 overflow-hidden rounded bg-stone-100">${p.image ? `<img src="${p.image}" class="h-full w-full object-cover">` : '📦'}</div>
+        <div class="flex-1"><b>${esc(p.name)}</b> - Rs. ${p.price} (Stock: ${p.stock_quantity})</div>
+        <button class="btn2 !text-red-600" onclick="delProduct(${p.id})">Delete</button>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Customers Khata Table -->
+  <div class="card p-0">
+    <div class="p-4"><b>Customers Khata Baqaya</b></div>
+    <table class="w-full text-sm">
+      <thead><tr><th class="th">Name</th><th class="th">Phone</th><th class="th text-right">Baqaya Balance</th></tr></thead>
+      <tbody class="divide-y divide-stone-100">${db.customers.map(c => `
+        <tr>
+          <td class="td">${esc(c.name)}</td>
+          <td class="td">${c.phone}</td>
+          <td class="td text-right font-semibold ${bal(c.id)>0?'text-red-600':''}">Rs. ${bal(c.id)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// Handle Product Add with Photo Compression
+function addProduct(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const file = fd.get('photo');
+  
+  const saveToDB = async (imgData) => {
+    const data = {
+      name: fd.get('name'),
+      category: fd.get('cat'),
+      price: parseFloat(fd.get('price')),
+      stock_quantity: parseInt(fd.get('stock')),
+      image: imgData
+    };
+    const res = await fetch(`${BASE_URL}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if(res.ok) { alert('Product added successfully!'); loadData(); }
+  };
+
+  if(file && file.size > 0) {
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, 400 / Math.max(img.width, img.height));
+        canvas.width = img.width * scale; canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        saveToDB(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = uploadEvent.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else { saveToDB(''); }
+}
+
+async function delProduct(id) {
+  if(!confirm('Delete product?')) return;
+  await fetch(`${BASE_URL}/products/${id}`, { method: 'DELETE' });
+  loadData();
+}
+
+async function addTxn(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = {
+    customer_id: fd.get('customer_id'),
+    type: fd.get('type'),
+    description: fd.get('description'),
+    amount: parseFloat(fd.get('amount'))
+  };
+  const res = await fetch(`${BASE_URL}/transactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if(res.ok) { alert('Transaction saved!'); loadData(); }
+}
+
+function route() {
+  if(!me) { $('v-home').classList.remove('hidden'); $('v-admin').classList.add('hidden'); }
+  else { $('v-home').classList.add('hidden'); $('v-admin').classList.remove('hidden'); renderAdmin(); }
+  renderAuth();
+}
+
+loadData().then(() => route());
+</script>
+</body>
+</html>
