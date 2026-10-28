@@ -4,17 +4,18 @@ const mysql = require('mysql2');
 const path = require('path');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Image base64 ke liye limit barha di hai
 app.use(express.static(path.join(__dirname)));
 
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'haroon_zarai_db'
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'haroon_zarai_db',
+  port: process.env.DB_PORT || 3306
 });
 
 db.connect((err) => {
@@ -89,5 +90,5 @@ app.post('/api/transactions', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
