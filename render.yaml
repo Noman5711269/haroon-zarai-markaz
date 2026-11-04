@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: haroon-zarai-markaz
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: ADMIN_PIN
+        value: "339066"
