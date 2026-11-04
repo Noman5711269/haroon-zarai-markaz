@@ -1358,7 +1358,7 @@ class PostgresDB {
       if (conds.length > 0) q += ' WHERE ' + conds.join(' AND ');
       q += ' ORDER BY created_at DESC';
       const res = await this.query(q, params);
-      if (res && res.rows && res.rows.length > 0) {
+      if (res && res.rows) {
         return res.rows.map(r => {
           const rem = Number(r.remaining_amount) || 0;
           const w = Number(r.weight) || 0;
@@ -1394,12 +1394,7 @@ class PostgresDB {
           };
         });
       }
-      // If table is empty, seed from local database
-      const fallbackList = localDb.getFarmerPayables(farmerId, type);
-      for (const item of fallbackList) {
-        await this.addFarmerPayable(item).catch(() => {});
-      }
-      return fallbackList;
+      return [];
     } catch(e) {
       console.warn('postgres getFarmerPayables fallback:', e.message);
       return localDb.getFarmerPayables(farmerId, type);
