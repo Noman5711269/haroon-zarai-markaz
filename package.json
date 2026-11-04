@@ -1,0 +1,19 @@
+{
+  "name": "haroon-zarai-markaz",
+  "version": "1.0.0",
+  "description": "Haroon Zarai Markaz - Agricultural Trading, Zarai Adviyaat & Farmer Khata Management System",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "pg": "^8.23.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

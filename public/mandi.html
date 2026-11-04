@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>گندم، چاول، تل و اجناس منڈی ریٹس | ہارون زرعی مرکز</title>
+  <meta name="description" content="ہارون زرعی مرکز: گندم، باسمتی چاول، سفید و سیاہ تل، سورج مکھی اور مکئی کے آج کے تازہ ترین منڈی خرید و فروخت ریٹ مع لائیو کیلکولیٹر۔">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80',
+              500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d', 950: '#052e16'
+            },
+            agroyellow: {
+              50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047', 400: '#facc15', 500: '#eab308', 600: '#ca8a04'
+            },
+            agroorange: {
+              50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Instant check for logged-in session to prevent any login flicker -->
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('hzm_farmer_session')) {
+          document.documentElement.classList.add('farmer-logged-in');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    html.farmer-logged-in #modal-farmer-gateway,
+    html.farmer-logged-in .visitor-login-only {
+      display: none !important;
+    }
+  </style>
+
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-[#fcfbf5] text-gray-800 antialiased selection:bg-amber-500 selection:text-white">
+
+  <!-- TOP BAR -->
+  <div class="topbar-gradient text-agroorange-950 py-2.5 px-4 text-xs md:text-sm border-b border-agroorange-200 shadow-xs">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+      <div class="flex items-center gap-2">
+        <span class="bg-amber-600 text-white font-extrabold px-3 py-0.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1 shadow-xs">
+          <i class="fa-solid fa-scale-balanced text-[10px]"></i> غلہ منڈی باضابطہ ریٹس
+        </span>
+        <span class="font-bold text-gray-800">
+          🌾 گندم، چاول، سفید تل اور سورج مکھی کی بہترین نرخوں پر نقد خریداری جاری ہے!
+        </span>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-bold text-gray-700">
+        <!-- 3-Language Switcher -->
+        <div class="inline-flex items-center bg-white/95 p-0.5 rounded-xl border border-agroorange-300 shadow-xs text-xs font-black">
+          <button type="button" onclick="setLanguage('ur')" data-lang="ur" class="lang-pill px-2.5 py-1 rounded-lg transition">🇵🇰 اردو</button>
+          <button type="button" onclick="setLanguage('en')" data-lang="en" class="lang-pill px-2.5 py-1 rounded-lg transition">🇬🇧 English</button>
+          <button type="button" onclick="setLanguage('both')" data-lang="both" class="lang-pill px-2.5 py-1 rounded-lg transition">🌐 دونوں</button>
+        </div>
+        <span class="text-agroorange-300">|</span>
+        <a id="top-phone-link" href="tel:03007654321" class="hover:text-agroorange-600 transition flex items-center gap-1.5 font-mono">
+          <i class="fa-solid fa-phone text-amber-600"></i> <span id="top-phone" dir="ltr">0300-7654321</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-agroorange-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+        
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-yellow-500 to-amber-600 text-brand-950 flex items-center justify-center text-2xl shadow-lg shadow-yellow-500/20 group-hover:scale-105 transition">
+            <i class="fa-solid fa-wheat-awn"></i>
+          </div>
+          <div>
+            <span class="text-xl sm:text-2xl font-black text-brand-950 font-urdu block leading-none">
+              ہارون زرعی مرکز
+            </span>
+            <span class="text-[11px] text-amber-700 font-extrabold uppercase tracking-widest mt-1 block">
+              گندم، چاول و اجناس غلہ منڈی • پل 88
+            </span>
+          </div>
+        </a>
+
+        <!-- Portal Switcher Links (Desktop) -->
+        <nav class="hidden lg:flex items-center gap-3 text-xs sm:text-sm font-black">
+          <a href="/" class="hover:text-brand-900 transition flex items-center gap-1.5 text-gray-700 bg-gray-100 hover:bg-gray-200 px-3.5 py-2 rounded-xl">
+            <i class="fa-solid fa-house text-gray-500"></i> ہوم پیج
+          </a>
+          <a href="/khata" class="hover:text-brand-900 transition flex items-center gap-1.5 text-gray-700 bg-brand-50 hover:bg-brand-100 border border-brand-300 px-3.5 py-2 rounded-xl">
+            <i class="fa-solid fa-book-bookmark text-emerald-600"></i> ڈیجیٹل کسان کھاتہ
+          </a>
+          <a href="/adviyaat" class="hover:text-agroorange-700 transition flex items-center gap-1.5 text-gray-700 bg-agroyellow-50 hover:bg-agroyellow-100 border border-agroyellow-300 px-3.5 py-2 rounded-xl">
+            <i class="fa-solid fa-flask-vial text-agroorange-600"></i> زرعی ادویات و کھاد
+          </a>
+          <a href="/mandi" class="flex items-center gap-1.5 text-brand-950 bg-yellow-400 px-4 py-2 rounded-xl shadow-sm border border-yellow-500">
+            <i class="fa-solid fa-wheat-awn text-amber-800"></i> گندم و منڈی ریٹس
+          </a>
+        </nav>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2">
+          <!-- Farmer Active User Header Pill (Shown when logged in) -->
+          <div id="header-user-pill" class="hidden items-center gap-2 bg-emerald-50 border-2 border-emerald-400 px-3 py-1.5 rounded-2xl font-black text-xs text-emerald-950 shadow-xs">
+            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <span id="header-user-name">کسان بھائی</span>
+            <a href="/khata" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-2xs transition">
+              کھاتہ
+            </a>
+            <button type="button" onclick="farmerLogout()" class="text-rose-600 hover:text-rose-800 text-[11px] font-extrabold px-1.5 py-0.5 hover:bg-rose-50 rounded transition cursor-pointer" title="لاگ آؤٹ کریں">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> لاگ آؤٹ
+            </button>
+          </div>
+
+          <a href="/" class="bg-gradient-to-r from-emerald-600 to-brand-700 hover:from-emerald-700 hover:to-brand-800 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+            <span>واپس مین ویب سائٹ</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE HERO BANNER -->
+  <section class="bg-gradient-to-b from-yellow-600 via-amber-600 to-amber-700 text-white py-12 md:py-16 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+      <span class="inline-flex items-center gap-2 bg-brand-950/40 backdrop-blur-xs text-yellow-300 text-xs font-black px-4 py-1.5 rounded-full border border-yellow-400/30 mb-3 shadow-xs">
+        <i class="fa-solid fa-scale-unbalanced-flip text-amber-300"></i> ڈیجیٹل کمپیوٹرائزڈ وزنی کانٹا • موقع پر نقد پیمنٹ
+      </span>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black font-urdu mb-3 leading-tight text-white">
+        آج کے تازہ ترین گندم، چاول و اجناس منڈی ریٹ
+      </h1>
+      <p class="text-sm sm:text-base text-yellow-100 max-w-2xl mx-auto font-medium">
+        ہم گندم، باسمتی دھان، سفید و سیاہ تل، سورج مکھی، مکئی، کپاس اور سرسوں کسان بھائیوں سے روزانہ منڈی کے سب سے بہترین نقد ریٹ پر خریدتے ہیں۔
+      </p>
+
+      <!-- Quick 3 Navigation Pills -->
+      <div class="flex flex-wrap justify-center gap-3 mt-6">
+        <a href="/khata" class="bg-brand-950/40 hover:bg-brand-950/60 text-white border border-white/25 rounded-2xl px-4 py-2 text-xs font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-book-bookmark text-emerald-300"></i> ڈیجیٹل کسان کھاتہ دیکھیں
+        </a>
+        <a href="/adviyaat" class="bg-brand-950/40 hover:bg-brand-950/60 text-white border border-white/25 rounded-2xl px-4 py-2 text-xs font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-flask-vial text-amber-300"></i> زرعی ادویات و کھاد اسٹور
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE MANDI RATES TICKER BAR -->
+  <div class="ticker-agro-gradient text-agroorange-950 py-3 overflow-hidden shadow-inner font-extrabold border-y border-agroyellow-300">
+    <div class="ticker-wrap flex items-center">
+      <div class="ticker-move flex items-center gap-8 text-sm md:text-base" id="running-ticker">
+        <!-- Populated by JS -->
+        <span>🌾 گندم خریداری: 3,950 روپے</span>
+        <span>🍚 چاول کائنات 1121: 4,650 روپے</span>
+        <span>🌻 سورج مکھی: 6,900 روپے</span>
+        <span>🌱 سفید تل: 15,800 روپے</span>
+        <span>🌾 گندم فروخت: 4,100 روپے</span>
+        <span>🌽 مکئی ہائبرڈ: 2,800 روپے</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANDI RATES MAIN SECTION -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mb-20 space-y-12">
+    
+    <!-- Section Heading -->
+    <div class="text-center max-w-3xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-brand-100 text-brand-800 px-4 py-1.5 rounded-full text-xs font-bold mb-3 border border-brand-200">
+        <i class="fa-solid fa-calendar-check text-agroorange-600"></i> <span id="hero-today-date">28 اکتوبر 2026</span> کے ریٹ
+      </div>
+      <h2 class="text-2xl md:text-4xl font-black text-gray-900 font-urdu">
+        غلہ منڈی کے باضابطہ خرید و فروخت نرخ
+      </h2>
+      <p class="text-gray-600 mt-2 text-xs sm:text-sm">
+        تمام ریٹس فی 40 کلوگرام (1 من) کے حساب سے درج ہیں۔ صاف ستھری اور خشک فصل پر سب سے بہترین نقد ریٹ دیا جاتا ہے۔
+      </p>
+    </div>
+
+    <!-- Mandi Rates Search Bar with Search Button -->
+    <div class="max-w-2xl mx-auto bg-white p-4 rounded-3xl shadow-md border-2 border-yellow-300 flex flex-col sm:flex-row gap-3 items-center">
+      <div class="relative flex-1 w-full">
+        <input 
+          type="text" 
+          id="mandi-rate-search-input" 
+          placeholder="گندم، چاول، سفید تل، کالا تل، سرسوں یا فصل کا نام لکھ کر تلاش کریں..." 
+          onkeydown="if(event.key==='Enter'){event.preventDefault(); triggerMandiSearch();}"
+          class="w-full pl-4 pr-11 py-3 bg-yellow-50/40 border border-yellow-300 rounded-2xl focus:bg-white focus:border-yellow-600 focus:outline-none text-xs sm:text-sm font-bold text-right"
+        >
+        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-yellow-600">
+          <i class="fa-solid fa-wheat-awn"></i>
+        </div>
+      </div>
+      <button 
+        type="button" 
+        id="btn-mandi-search" 
+        onclick="triggerMandiSearch()" 
+        class="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-brand-950 font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition cursor-pointer whitespace-nowrap"
+      >
+        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        <span>تلاش کریں (Search)</span>
+      </button>
+      <button 
+        type="button" 
+        onclick="clearMandiSearch()" 
+        class="w-full sm:w-auto bg-yellow-50 hover:bg-yellow-100 text-yellow-900 border border-yellow-300 font-bold px-3 py-3 rounded-2xl text-xs flex items-center justify-center gap-1 transition cursor-pointer whitespace-nowrap"
+      >
+        <i class="fa-solid fa-rotate"></i>
+        <span>سب دیکھیں</span>
+      </button>
+    </div>
+
+    <!-- Live Rates Grid (Populated by JS loadMandiRates) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="rates-cards-grid">
+      <!-- Skeletons -->
+      <div class="h-48 bg-white rounded-3xl p-5 shadow-sm border border-agroorange-100 animate-pulse"></div>
+      <div class="h-48 bg-white rounded-3xl p-5 shadow-sm border border-agroorange-100 animate-pulse"></div>
+      <div class="h-48 bg-white rounded-3xl p-5 shadow-sm border border-agroorange-100 animate-pulse"></div>
+      <div class="h-48 bg-white rounded-3xl p-5 shadow-sm border border-agroorange-100 animate-pulse"></div>
+    </div>
+
+    <!-- MANDI RATE CALCULATOR (انٹرایکٹو منڈی ریٹ کیلکولیٹر) -->
+    <section class="bg-gradient-to-br from-agroyellow-50 via-white to-amber-50 rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-agroyellow-300">
+      <div class="max-w-3xl mx-auto text-right">
+        
+        <div class="text-center mb-6">
+          <span class="inline-flex items-center gap-1.5 bg-yellow-400 text-brand-950 text-xs font-black px-3.5 py-1 rounded-full border border-yellow-500 shadow-xs mb-2">
+            <i class="fa-solid fa-calculator"></i> فوری آن لائن حساب
+          </span>
+          <h3 class="text-2xl sm:text-3xl font-black text-gray-900 font-urdu">
+            منڈی ریٹ و کیش کیلکولیٹر
+          </h3>
+          <p class="text-xs text-gray-600 mt-1">
+            اپنی فصل کا وزن درج کریں اور دیکھیں کہ آپ کو کتنی رقم موقع پر نقد ملے گی:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">فصل منتخب کریں:</label>
+            <select id="calc-crop" onchange="updateCalcPrice()" class="w-full text-right text-xs sm:text-sm font-bold p-3 bg-white border-2 border-agroyellow-300 rounded-xl focus:outline-none focus:border-agroorange-500 transition">
+              <option value="3950">گندم (Wheat) - Rs. 3,950</option>
+              <option value="4650">چاول کائنات 1121 (Rice) - Rs. 4,650</option>
+              <option value="15800">سفید تل (White Sesame) - Rs. 15,800</option>
+              <option value="6900">سورج مکھی (Sunflower) - Rs. 6,900</option>
+              <option value="2800">مکئی ہائبرڈ (Corn) - Rs. 2,800</option>
+              <option value="8500">کپاس / پھٹی (Cotton) - Rs. 8,500</option>
+              <option value="6200">سرسوں / رایا (Mustard) - Rs. 6,200</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">کل وزن درج کریں (من یا کلو):</label>
+            <input type="number" id="calc-weight" value="50" min="1" step="0.5" oninput="calculateMandiPayout()" placeholder="مثال: 50" class="w-full text-center text-sm font-bold font-mono p-3 bg-white border-2 border-agroyellow-300 rounded-xl focus:outline-none focus:border-agroorange-500 transition">
+            <div class="flex items-center justify-center gap-3 mt-1.5 text-xs font-bold">
+              <label class="inline-flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="calc-unit" value="mund" checked onchange="calculateMandiPayout()" class="accent-agroorange-500">
+                <span>فی من (40 کلو)</span>
+              </label>
+              <label class="inline-flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="calc-unit" value="kg" onchange="calculateMandiPayout()" class="accent-agroorange-500">
+                <span>کلوگرام (Kg)</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">ریٹ فی من (روپے):</label>
+            <input type="number" id="calc-rate" value="3950" oninput="calculateMandiPayout()" class="w-full text-center text-sm font-bold font-mono p-3 bg-white border-2 border-agroyellow-300 rounded-xl focus:outline-none focus:border-agroorange-500 transition">
+            <span class="text-[11px] text-gray-500 block text-center mt-1">ریٹ خود بھی تبدیل کر سکتے ہیں</span>
+          </div>
+
+        </div>
+
+        <!-- Calculated Cash Result Box -->
+        <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-brand-800 text-white text-center shadow-lg space-y-2">
+          <span class="text-xs font-bold text-emerald-100 uppercase tracking-wider block">کسان کو موقع پر ملنے والی کل نقد رقم</span>
+          <div class="text-3xl sm:text-5xl font-black font-mono tracking-tight text-yellow-300" id="calc-total-cash">
+            Rs. 197,500
+          </div>
+          <p class="text-xs text-emerald-100 font-medium" id="calc-details-text">
+            50 من گندم @ Rs. 3,950 فی 40 کلوگرام
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SELL CROP ONLINE FORM (اپنی فصل بیچنے کی پیشکش فارم) -->
+    <section class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-agroorange-200">
+      <div class="max-w-2xl mx-auto text-right">
+        
+        <div class="text-center mb-6">
+          <div class="w-14 h-14 rounded-2xl bg-agroorange-100 text-agroorange-600 mx-auto flex items-center justify-center text-2xl shadow-sm mb-2">
+            <i class="fa-solid fa-truck-ramp-box"></i>
+          </div>
+          <h3 class="text-2xl font-black text-gray-900 font-urdu">
+            اپنی فصل ہارون زرعی مرکز کو فروخت کریں
+          </h3>
+          <p class="text-xs text-gray-600 mt-1">
+            اپنی فصل کی تفصیل درج کریں، ہماری گاڑی / ٹرالی موقع پر آ کر بھی وزن کر کے نقد رقم ادا کرے گی:
+          </p>
+        </div>
+
+        <form id="form-trade-request" onsubmit="submitTradeRequest(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">کسان کا نام:</label>
+              <input type="text" id="trade-name" required placeholder="مثال: میاں محمد نواز" class="w-full text-right text-xs sm:text-sm font-bold p-3 bg-agroyellow-50 border border-agroyellow-300 rounded-xl focus:bg-white focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">موبائل نمبر:</label>
+              <input type="text" id="trade-mobile" dir="ltr" required placeholder="موبائل فون نمبر درج کریں" class="w-full text-right text-xs sm:text-sm font-bold p-3 bg-agroyellow-50 border border-agroyellow-300 rounded-xl focus:bg-white focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">فصل کی قسم:</label>
+              <select id="trade-crop" class="w-full text-right text-xs sm:text-sm font-bold p-3 bg-agroyellow-50 border border-agroyellow-300 rounded-xl focus:bg-white focus:outline-none">
+                <option value="گندم (Wheat)">گندم (Wheat)</option>
+                <option value="چاول کائنات (Rice)">چاول کائنات (Rice)</option>
+                <option value="دھان موٹا 386">دھان موٹا 386</option>
+                <option value="سفید تل (White Sesame)">سفید تل (White Sesame)</option>
+                <option value="سیاہ تل (Black Sesame)">سیاہ تل (Black Sesame)</option>
+                <option value="سورج مکھی (Sunflower)">سورج مکھی (Sunflower)</option>
+                <option value="کپاس / پھٹی (Cotton)">کپاس / پھٹی (Cotton)</option>
+                <option value="مکئی ہائبرڈ (Corn)">مکئی ہائبرڈ (Corn)</option>
+                <option value="سرسوں / رایا (Mustard)">سرسوں / رایا (Mustard)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">متوقع مقدار (کتنے من یا بوریاں):</label>
+              <input type="text" id="trade-quantity" required placeholder="مثال: 100 من یا 50 بوریاں" class="w-full text-right text-xs sm:text-sm font-bold p-3 bg-agroyellow-50 border border-agroyellow-300 rounded-xl focus:bg-white focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">گاؤں / چک کا پتہ:</label>
+            <input type="text" id="trade-village" required placeholder="مثال: چک 88، نزد پل 88، کوٹ ادو" class="w-full text-right text-xs sm:text-sm font-bold p-3 bg-agroyellow-50 border border-agroyellow-300 rounded-xl focus:bg-white focus:outline-none">
+          </div>
+
+          <div id="trade-alert" class="hidden p-3 rounded-xl text-xs font-bold text-center"></div>
+
+          <button type="submit" id="trade-submit-btn" class="w-full bg-gradient-to-r from-agroorange-500 to-amber-500 hover:from-agroorange-600 hover:to-amber-600 text-white font-black py-3.5 rounded-xl shadow-lg shadow-agroorange-500/25 text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>فصل فروخت کرنے کی پیشکش ارسال کریں</span>
+          </button>
+        </form>
+
+      </div>
+    </section>
+
+    <!-- Quick Switch to Khata and Adviyaat -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <a href="/khata" class="p-5 rounded-3xl bg-gradient-to-r from-emerald-600 to-brand-700 text-white flex items-center justify-between shadow-lg hover:shadow-xl transition group">
+        <div>
+          <span class="text-xs text-emerald-100 font-bold block">کھاتے کا حساب چیک کرنا ہے؟</span>
+          <h4 class="text-lg font-black font-urdu mt-0.5">ڈیجیٹل کسان کھاتہ پورٹل پر جائیں</h4>
+        </div>
+        <span class="w-10 h-10 rounded-2xl bg-white text-emerald-700 flex items-center justify-center text-lg shadow-md group-hover:-translate-x-1 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
+      </a>
+
+      <a href="/adviyaat" class="p-5 rounded-3xl bg-gradient-to-r from-agroorange-500 to-amber-600 text-white flex items-center justify-between shadow-lg hover:shadow-xl transition group">
+        <div>
+          <span class="text-xs text-amber-100 font-bold block">ادویات و کھاد خریدنی ہے؟</span>
+          <h4 class="text-lg font-black font-urdu mt-0.5">زرعی ادویات و کھاد اسٹور پر جائیں</h4>
+        </div>
+        <span class="w-10 h-10 rounded-2xl bg-white text-agroorange-600 flex items-center justify-center text-lg shadow-md group-hover:-translate-x-1 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-950 text-white pt-10 pb-6 border-t-4 border-yellow-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-gray-400 space-y-2">
+      <p class="font-urdu text-sm font-bold text-yellow-400">ہارون زرعی مرکز • پل 88، شادی خان منڈا، کوٹ ادو</p>
+      <p>© 2026 جملہ حقوق محفوظ ہیں۔ غلہ منڈی باضابطہ خرید و فروخت نیٹ ورک۔</p>
+    </div>
+  </footer>
+
+  <!-- Calculator Script helper -->
+  <script>
+    function updateCalcPrice() {
+      const cropSelect = document.getElementById('calc-crop');
+      const rateInput = document.getElementById('calc-rate');
+      if (cropSelect && rateInput) {
+        rateInput.value = cropSelect.value;
+        calculateMandiPayout();
+      }
+    }
+
+    function calculateMandiPayout() {
+      const weightVal = parseFloat(document.getElementById('calc-weight')?.value) || 0;
+      const rateVal = parseFloat(document.getElementById('calc-rate')?.value) || 0;
+      const unit = document.querySelector('input[name="calc-unit"]:checked')?.value || 'mund';
+      const cropText = document.getElementById('calc-crop')?.options[document.getElementById('calc-crop')?.selectedIndex]?.text.split(' - ')[0] || 'فصل';
+
+      let totalMunds = weightVal;
+      if (unit === 'kg') {
+        totalMunds = weightVal / 40;
+      }
+
+      const totalCash = Math.round(totalMunds * rateVal);
+      const totalCashEl = document.getElementById('calc-total-cash');
+      const detailsEl = document.getElementById('calc-details-text');
+
+      if (totalCashEl) {
+        totalCashEl.innerText = 'Rs. ' + totalCash.toLocaleString();
+      }
+      if (detailsEl) {
+        const unitLabel = unit === 'kg' ? `${weightVal} کلوگرام (${totalMunds.toFixed(1)} من)` : `${weightVal} من`;
+        detailsEl.innerText = `${unitLabel} ${cropText} @ Rs. ${rateVal.toLocaleString()} فی من`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      calculateMandiPayout();
+    });
+  </script>
+
+  <!-- Main JavaScript App -->
+  <script src="/js/app.js"></script>
+</body>
+</html>

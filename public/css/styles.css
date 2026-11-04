@@ -1,0 +1,293 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap');
+
+:root {
+  --primary-light-green: #22c55e;
+  --primary-green: #16a34a;
+  --primary-dark-green: #15803d;
+  --bg-light-green: #f0fdf4;
+  --bg-light-yellow: #fefce8;
+  --bg-light-orange: #fff7ed;
+  --accent-orange: #f97316;
+  --accent-orange-dark: #ea580c;
+  --accent-yellow: #f59e0b;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #fafcf8;
+  color: #1f2937;
+  transition: all 0.2s ease-in-out;
+}
+
+[dir="rtl"] body, body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="ltr"] body, body.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="rtl"] .font-urdu {
+  font-family: 'Noto Nastaliq Urdu', 'Inter', serif;
+  line-height: 1.9;
+}
+
+[dir="ltr"] .font-urdu {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+[dir="rtl"] .font-urdu-clean {
+  font-family: 'Noto Nastaliq Urdu', -apple-system, sans-serif;
+  line-height: 1.8;
+}
+
+[dir="ltr"] .font-urdu-clean {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.4;
+}
+
+[dir="ltr"] .ltr-flip {
+  transform: scaleX(-1);
+}
+
+/* Light Yellow / Orange & Light Green Hero Gradient */
+.hero-agro-gradient {
+  background: linear-gradient(135deg, #eaf9ed 0%, #fefce8 55%, #ffedd5 100%);
+  border-bottom: 2px solid #fed7aa;
+}
+
+/* Top bar light orange gradient */
+.topbar-gradient {
+  background: linear-gradient(90deg, #ffedd5 0%, #fef3c7 50%, #dcfce7 100%);
+}
+
+/* Ticker light orange & yellow gradient */
+.ticker-agro-gradient {
+  background: linear-gradient(90deg, #fef08a 0%, #fed7aa 50%, #fef08a 100%);
+}
+
+/* Mandi Ticker Animation */
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-move {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker 35s linear infinite;
+}
+
+.ticker-move:hover {
+  animation-play-state: paused;
+}
+
+/* Cards & Badges */
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid #fed7aa;
+}
+
+.card-light-green {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.card-light-orange {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.card-light-yellow {
+  background-color: #fefce8;
+  border: 1px solid #fef08a;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #fefce8;
+}
+::-webkit-scrollbar-thumb {
+  background: #fed7aa;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
+}
+
+/* Khata Receipt Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white;
+    color: black;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ==========================================
+   BIOMETRIC & FACE SCANNER ANIMATIONS
+   ========================================== */
+@keyframes scan-laser {
+  0% { top: 6%; opacity: 0.9; }
+  50% { top: 90%; opacity: 1; }
+  100% { top: 6%; opacity: 0.9; }
+}
+
+.scanner-laser {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #22c55e, #38bdf8, #22c55e, transparent);
+  box-shadow: 0 0 16px #38bdf8, 0 0 28px #22c55e;
+  border-radius: 9999px;
+  animation: scan-laser 2.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+@keyframes bio-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.04); opacity: 0.35; }
+}
+
+.bio-ring {
+  animation: bio-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes reticle-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.reticle-spin {
+  animation: reticle-rotate 12s linear infinite;
+}
+
+/* ==========================================
+   5-SECOND MOTION INTRO SPLASH SCREEN
+   (ہارون زرعی مرکز موشن شاپ لوگو و نام انٹرو)
+   ========================================== */
+#motion-intro-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: radial-gradient(circle at center, #0f3d26 0%, #062316 60%, #02140c 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), filter 0.7s ease;
+}
+
+#motion-intro-splash.splash-exit {
+  opacity: 0;
+  transform: scale(1.04);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+@keyframes motion-logo-float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    box-shadow: 0 20px 45px rgba(22, 163, 74, 0.35), 0 0 60px rgba(245, 158, 11, 0.25);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: 0 30px 60px rgba(22, 163, 74, 0.5), 0 0 90px rgba(245, 158, 11, 0.45);
+  }
+}
+
+.motion-logo-box {
+  animation: motion-logo-float 2.8s ease-in-out infinite;
+}
+
+@keyframes motion-halo-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.motion-halo-ring {
+  animation: motion-halo-spin 8s linear infinite;
+}
+
+@keyframes motion-counter-ring {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.motion-counter-ring {
+  animation: motion-counter-ring 12s linear infinite;
+}
+
+@keyframes text-glow-shimmer {
+  0% { filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4)); }
+  50% { filter: drop-shadow(0 0 24px rgba(250, 204, 21, 0.85)) drop-shadow(0 0 45px rgba(34, 197, 94, 0.6)); }
+  100% { filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4)); }
+}
+
+.motion-title-shimmer {
+  animation: text-glow-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes progress-fill-5s {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.motion-progress-bar-fill {
+  animation: progress-fill-5s 5s linear forwards;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-20vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.motion-bg-particle {
+  position: absolute;
+  pointer-events: none;
+  animation: float-particle linear infinite;
+}

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>زرعی ادویات، اسپرے و کھاد سینٹر | ہارون زرعی مرکز</title>
+  <meta name="description" content="ہارون زرعی مرکز: تمام فصلوں کے لیے اصل کیڑے مار اسپرے، جڑی بوٹی مار زہریں، تصدیق شدہ کھادیں اور بیج مع فوٹو، قیمت اور طریقہ استعمال۔">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80',
+              500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d', 950: '#052e16'
+            },
+            agroyellow: {
+              50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047', 400: '#facc15', 500: '#eab308', 600: '#ca8a04'
+            },
+            agroorange: {
+              50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Instant check for logged-in session to prevent any login flicker -->
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('hzm_farmer_session')) {
+          document.documentElement.classList.add('farmer-logged-in');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    html.farmer-logged-in #modal-farmer-gateway,
+    html.farmer-logged-in .visitor-login-only {
+      display: none !important;
+    }
+  </style>
+
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-[#fcfaf5] text-gray-800 antialiased selection:bg-agroorange-500 selection:text-white">
+
+  <!-- TOP BAR -->
+  <div class="topbar-gradient text-agroorange-950 py-2.5 px-4 text-xs md:text-sm border-b border-agroorange-200 shadow-xs">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+      <div class="flex items-center gap-2">
+        <span class="bg-agroorange-500 text-white font-extrabold px-3 py-0.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1 shadow-xs">
+          <i class="fa-solid fa-certificate text-[10px]"></i> 100% اصل ادویات
+        </span>
+        <span class="font-bold text-gray-800">
+          🌾 تمام ملٹی نیشنل و قومی کمپنیوں کی تصدیق شدہ زرعی ادویات و کھادیں مناسب ریٹ پر دستیاب ہیں
+        </span>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-bold text-gray-700">
+        <!-- 3-Language Switcher -->
+        <div class="inline-flex items-center bg-white/95 p-0.5 rounded-xl border border-agroorange-300 shadow-xs text-xs font-black">
+          <button type="button" onclick="setLanguage('ur')" data-lang="ur" class="lang-pill px-2.5 py-1 rounded-lg transition">🇵🇰 اردو</button>
+          <button type="button" onclick="setLanguage('en')" data-lang="en" class="lang-pill px-2.5 py-1 rounded-lg transition">🇬🇧 English</button>
+          <button type="button" onclick="setLanguage('both')" data-lang="both" class="lang-pill px-2.5 py-1 rounded-lg transition">🌐 دونوں</button>
+        </div>
+        <span class="text-agroorange-300">|</span>
+        <a id="top-phone-link" href="tel:03007654321" class="hover:text-agroorange-600 transition flex items-center gap-1.5 font-mono">
+          <i class="fa-solid fa-phone text-agroorange-500"></i> <span id="top-phone" dir="ltr">0300-7654321</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-agroorange-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+        
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-agroorange-500 to-amber-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-agroorange-500/20 group-hover:scale-105 transition">
+            <i class="fa-solid fa-flask-vial"></i>
+          </div>
+          <div>
+            <span class="text-xl sm:text-2xl font-black text-brand-950 font-urdu block leading-none">
+              ہارون زرعی مرکز
+            </span>
+            <span class="text-[11px] text-agroorange-700 font-extrabold uppercase tracking-widest mt-1 block">
+              زرعی ادویات، بیج و کھاد اسٹور • پل 88
+            </span>
+          </div>
+        </a>
+
+        <!-- Portal Switcher Links (Desktop) -->
+        <nav class="hidden lg:flex items-center gap-2 text-xs font-black">
+          <a href="/" class="hover:text-brand-900 transition flex items-center gap-1 text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl">
+            <i class="fa-solid fa-house text-gray-500"></i> ہوم
+          </a>
+          <a href="/khata" class="hover:text-brand-900 transition flex items-center gap-1 text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-2 rounded-xl">
+            <i class="fa-solid fa-book-bookmark text-emerald-600"></i> کسان کھاتہ
+          </a>
+          <a href="/adviyaat?cat=pesticide" id="nav-btn-adviyaat" class="flex items-center gap-1 text-white bg-orange-600 px-3 py-2 rounded-xl shadow-xs">
+            <i class="fa-solid fa-flask-vial text-yellow-200"></i> زرعی ادویات
+          </a>
+          <a href="/khaad" id="nav-btn-khaad" class="hover:text-blue-900 transition flex items-center gap-1 text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-300 px-3 py-2 rounded-xl">
+            <i class="fa-solid fa-cubes-stacked text-blue-600"></i> کھاد سینٹر
+          </a>
+          <a href="/beej" id="nav-btn-beej" class="hover:text-teal-900 transition flex items-center gap-1 text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-300 px-3 py-2 rounded-xl">
+            <i class="fa-solid fa-seedling text-teal-600"></i> گھاس و فصلوں کے بیج
+          </a>
+          <a href="/mandi" class="hover:text-yellow-800 transition flex items-center gap-1 text-yellow-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-2 rounded-xl">
+            <i class="fa-solid fa-wheat-awn text-amber-600"></i> منڈی ریٹس
+          </a>
+        </nav>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2">
+          <!-- Farmer Active User Header Pill (Shown when logged in) -->
+          <div id="header-user-pill" class="hidden items-center gap-2 bg-emerald-50 border-2 border-emerald-400 px-3 py-1.5 rounded-2xl font-black text-xs text-emerald-950 shadow-xs">
+            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <span id="header-user-name">کسان بھائی</span>
+            <a href="/khata" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-2xs transition">
+              کھاتہ
+            </a>
+            <button type="button" onclick="farmerLogout()" class="text-rose-600 hover:text-rose-800 text-[11px] font-extrabold px-1.5 py-0.5 hover:bg-rose-50 rounded transition cursor-pointer" title="لاگ آؤٹ کریں">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> لاگ آؤٹ
+            </button>
+          </div>
+
+          <a href="/" class="bg-gradient-to-r from-emerald-600 to-brand-700 hover:from-emerald-700 hover:to-brand-800 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+            <span>واپس مین ویب سائٹ</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE HERO BANNER -->
+  <section class="bg-gradient-to-b from-agroorange-600 via-amber-600 to-amber-700 text-white py-12 md:py-16 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+      <span class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs text-amber-100 text-xs font-black px-4 py-1.5 rounded-full border border-white/20 mb-3 shadow-xs">
+        <i class="fa-solid fa-plant-wilt text-yellow-300"></i> گندم، کپاس، دھان، مکئی اور سبزیوں کی تمام ادویات
+      </span>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black font-urdu mb-3 leading-tight text-white">
+        زرعی ادویات، اسپرے، بیج اور کھادوں کا مکمل اسٹور
+      </h1>
+      <p class="text-sm sm:text-base text-amber-100 max-w-2xl mx-auto font-medium">
+        ہم کسانوں کو اصل اور مستند کمپنیوں (FMC، Bayer، Syngenta، Engro، Tara) کے کیڑے مار زہریں، پھپھوند کش، جڑی بوٹی مار اسپرے اور یوریا و ڈی اے پی کھادیں فراہم کرتے ہیں۔
+      </p>
+
+      <!-- Quick 3 Navigation Pills -->
+      <div class="flex flex-wrap justify-center gap-3 mt-6">
+        <a href="/khata" class="bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-2xl px-4 py-2 text-xs font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-book-bookmark text-emerald-300"></i> ڈیجیٹل کسان کھاتہ دیکھیں
+        </a>
+        <a href="/mandi" class="bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-2xl px-4 py-2 text-xs font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-wheat-awn text-yellow-300"></i> آج کے منڈی ریٹ چیک کریں
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORE CONTENT SECTION -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 mb-20 relative z-10">
+    
+    <!-- Master Department Switcher Tabs (3 Separate Main Buttons + All Items) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <button type="button" onclick="filterDepartment('pesticide')" id="dept-btn-pesticide" class="dept-tab active bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-3xl flex items-center justify-center gap-3 font-black text-sm shadow-md transition cursor-pointer border-2 border-orange-400">
+        <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-flask-vial"></i>
+        </div>
+        <div class="text-right leading-tight">
+          <span class="block text-[11px] text-orange-200">الگ پورٹل ۱</span>
+          <span class="block text-sm sm:text-base font-urdu">زرعی ادویات و اسپرے</span>
+        </div>
+      </button>
+
+      <button type="button" onclick="filterDepartment('fertilizer')" id="dept-btn-fertilizer" class="dept-tab bg-white hover:bg-blue-50 text-blue-950 p-4 rounded-3xl flex items-center justify-center gap-3 font-black text-sm shadow-xs transition cursor-pointer border-2 border-blue-200">
+        <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-cubes-stacked"></i>
+        </div>
+        <div class="text-right leading-tight">
+          <span class="block text-[11px] text-blue-600">الگ پورٹل ۲</span>
+          <span class="block text-sm sm:text-base font-urdu">کھاد سینٹر (Fertilizers)</span>
+        </div>
+      </button>
+
+      <button type="button" onclick="filterDepartment('seed')" id="dept-btn-seed" class="dept-tab bg-white hover:bg-teal-50 text-teal-950 p-4 rounded-3xl flex items-center justify-center gap-3 font-black text-sm shadow-xs transition cursor-pointer border-2 border-teal-200">
+        <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-seedling"></i>
+        </div>
+        <div class="text-right leading-tight">
+          <span class="block text-[11px] text-teal-600">الگ پورٹل ۳</span>
+          <span class="block text-sm sm:text-base font-urdu">گھاس و فصلوں کے بیج</span>
+        </div>
+      </button>
+
+      <button type="button" onclick="filterDepartment('all')" id="dept-btn-all" class="dept-tab bg-white hover:bg-gray-100 text-gray-800 p-4 rounded-3xl flex items-center justify-center gap-3 font-black text-sm shadow-xs transition cursor-pointer border-2 border-gray-200">
+        <div class="w-10 h-10 rounded-2xl bg-gray-100 text-gray-600 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-boxes-stacked"></i>
+        </div>
+        <div class="text-right leading-tight">
+          <span class="block text-[11px] text-gray-500">تمام اسٹور کیٹلاگ</span>
+          <span class="block text-sm sm:text-base font-urdu">سب مصنوعات (All Items)</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Search & Sub-Filter Card -->
+    <div class="bg-white rounded-3xl p-6 sm:p-7 shadow-xl border-2 border-agroorange-200 mb-8 space-y-5">
+      
+      <!-- Top Row: Search Input & Department Heading -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-gray-900 font-urdu flex items-center gap-2" id="current-dept-heading">
+            <i class="fa-solid fa-flask-vial text-orange-600"></i>
+            <span>زرعی ادویات و اسپرے کیٹلاگ</span>
+          </h2>
+          <p class="text-xs text-gray-500 mt-0.5" id="current-dept-subheading">
+            کیڑے مار، جڑی بوٹی مار، اور پھپھوند کش زہریں مع طریقہ استعمال و قیمت:
+          </p>
+        </div>
+
+        <div class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-2.5">
+          <div class="relative w-full sm:w-80">
+            <input 
+              type="text" 
+              id="product-search-input" 
+              oninput="renderProductsGrid(this.value)" 
+              onkeydown="if(event.key==='Enter'){event.preventDefault(); triggerCustomerProductSearch();}"
+              placeholder="دوا، کھاد، بیج یا کمپنی کا نام لکھیں..." 
+              class="w-full pl-10 pr-4 py-3 bg-agroyellow-50 border-2 border-agroyellow-200 rounded-2xl focus:bg-white focus:border-agroorange-500 focus:outline-none text-xs sm:text-sm font-bold text-right transition"
+            >
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            id="btn-product-search" 
+            onclick="triggerCustomerProductSearch()" 
+            class="w-full sm:w-auto bg-gradient-to-r from-agroorange-500 to-amber-600 hover:from-agroorange-600 hover:to-amber-700 text-white font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition cursor-pointer whitespace-nowrap"
+          >
+            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            <span>تلاش کریں</span>
+          </button>
+          <button 
+            type="button" 
+            onclick="clearCustomerProductSearch()" 
+            class="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-3 rounded-2xl text-xs flex items-center justify-center gap-1 transition cursor-pointer whitespace-nowrap"
+            title="تلاش صاف کریں"
+          >
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>صاف کریں</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Sub-Category Filter Pills -->
+      <div id="subfilters-container" class="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100">
+        <!-- Rendered by JS or default pills -->
+      </div>
+
+    </div>
+
+    <!-- Products Grid (Filled automatically by JS loadProducts / renderProductsGrid) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="products-grid">
+      <!-- Loading Skeletons -->
+      <div class="h-80 bg-white rounded-3xl p-6 shadow-sm border border-agroorange-100 animate-pulse"></div>
+      <div class="h-80 bg-white rounded-3xl p-6 shadow-sm border border-agroorange-100 animate-pulse"></div>
+      <div class="h-80 bg-white rounded-3xl p-6 shadow-sm border border-agroorange-100 animate-pulse"></div>
+    </div>
+
+    <!-- Free Expert Advice Banner -->
+    <div class="mt-12 bg-gradient-to-r from-emerald-700 to-brand-800 text-white rounded-3xl p-6 md:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-4 text-right">
+        <div class="w-16 h-16 rounded-2xl bg-white/20 text-yellow-300 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+          <i class="fa-solid fa-user-doctor"></i>
+        </div>
+        <div>
+          <h3 class="text-xl sm:text-2xl font-black font-urdu">فصل میں بیماری یا سنڈی کا حملہ ہے؟</h3>
+          <p class="text-xs sm:text-sm text-emerald-100 mt-1 max-w-xl">
+            فصل کی تصویر ہمارے واٹس ایپ نمبر پر بھیجیں، ہارون زرعی مرکز کے ماہرین آپ کو بہترین اور سستی دوا تجویز کریں گے۔
+          </p>
+        </div>
+      </div>
+
+      <a id="btn-expert-wa" href="https://wa.me/923007654321?text=السلام%20علیکم!%20مجھے%20فصل%20کے%20لیے%20زرعی%20مشورہ%20چاہیے" target="_blank" class="bg-gradient-to-r from-yellow-400 to-amber-400 hover:from-yellow-500 hover:to-amber-500 text-brand-950 font-black px-6 py-3.5 rounded-2xl shadow-lg text-xs sm:text-sm whitespace-nowrap transition flex items-center gap-2">
+        <i class="fa-brands fa-whatsapp text-lg text-emerald-800"></i>
+        <span>ماہر سے واٹس ایپ پر مفت مشورہ لیں</span>
+      </a>
+    </div>
+
+    <!-- Quick Navigation to Khata and Mandi -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+      <a href="/khata" class="p-5 rounded-3xl bg-gradient-to-r from-emerald-600 to-brand-700 text-white flex items-center justify-between shadow-lg hover:shadow-xl transition group">
+        <div>
+          <span class="text-xs text-emerald-100 font-bold block">کھاتے کا حساب چیک کرنا ہے؟</span>
+          <h4 class="text-lg font-black font-urdu mt-0.5">ڈیجیٹل کسان کھاتہ پورٹل پر جائیں</h4>
+        </div>
+        <span class="w-10 h-10 rounded-2xl bg-white text-emerald-700 flex items-center justify-center text-lg shadow-md group-hover:-translate-x-1 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
+      </a>
+
+      <a href="/mandi" class="p-5 rounded-3xl bg-gradient-to-r from-yellow-500 to-amber-500 text-brand-950 flex items-center justify-between shadow-lg hover:shadow-xl transition group">
+        <div>
+          <span class="text-xs text-brand-900 font-bold block">غلہ و فصل کا ریٹ جاننا ہے؟</span>
+          <h4 class="text-lg font-black font-urdu mt-0.5">گندم و چاول منڈی ریٹس چیک کریں</h4>
+        </div>
+        <span class="w-10 h-10 rounded-2xl bg-brand-950 text-yellow-400 flex items-center justify-center text-lg shadow-md group-hover:-translate-x-1 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- PRODUCT DETAIL POPUP MODAL -->
+  <div id="modal-product-view" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative my-auto border-2 border-agroorange-300" dir="rtl">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-agroyellow-50">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-agroorange-500 text-white flex items-center justify-center text-lg shadow-sm">
+            <i class="fa-solid fa-flask-vial"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-gray-900 text-base sm:text-lg font-urdu" id="pv-name-urdu">پراڈکٹ کا نام</h3>
+            <span class="text-xs text-agroorange-700 font-bold block" id="pv-name-en">Product Name</span>
+          </div>
+        </div>
+        <button type="button" onclick="closeProductViewModal()" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto text-right">
+        
+        <div class="flex flex-col sm:flex-row gap-5 items-center">
+          <img id="pv-img" src="" alt="Product Photo" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-2xl border-2 border-gray-200 shadow-md">
+          <div class="flex-1 space-y-2.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="pv-category" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-300">کیٹگری</span>
+              <span id="pv-company" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-300">کمپنی</span>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500">قیمت (Price):</span>
+              <div class="text-2xl font-black text-brand-700 font-mono" id="pv-price">Rs. 0</div>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500">پیکنگ سائز (Pack Size):</span>
+              <div class="text-sm font-bold text-gray-800" id="pv-pack">1 لیٹر</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-gray-100">
+          <div>
+            <h5 class="text-xs font-bold text-gray-500 mb-0.5">کیمیکل و فعال اجزاء (Active Ingredient):</h5>
+            <p class="text-xs sm:text-sm font-semibold text-gray-800 bg-gray-50 p-2.5 rounded-xl border border-gray-200" id="pv-ingredient">-</p>
+          </div>
+          <div>
+            <h5 class="text-xs font-bold text-gray-500 mb-0.5">موزوں فصلیں (Suitable Crops):</h5>
+            <p class="text-xs sm:text-sm font-semibold text-gray-800 bg-gray-50 p-2.5 rounded-xl border border-gray-200" id="pv-crops">-</p>
+          </div>
+          <div>
+            <h5 class="text-xs font-bold text-gray-500 mb-0.5">کنٹرول کیڑے یا بیماریاں (Target Pests):</h5>
+            <p class="text-xs sm:text-sm font-semibold text-gray-800 bg-gray-50 p-2.5 rounded-xl border border-gray-200" id="pv-pests">-</p>
+          </div>
+          <div>
+            <h5 class="text-xs font-bold text-gray-500 mb-0.5">مکمل تفصیل و طریقہ استعمال (Instructions):</h5>
+            <p class="text-xs sm:text-sm font-medium text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-200 leading-relaxed" id="pv-desc">-</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+        <a id="pv-wa-btn" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span>یہ پراڈکٹ واٹس ایپ پر منگوائیں / معلوم کریں</span>
+        </a>
+        <button type="button" onclick="closeProductViewModal()" class="px-5 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs transition cursor-pointer">
+          بند کریں
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-950 text-white pt-10 pb-6 border-t-4 border-agroorange-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-gray-400 space-y-2">
+      <p class="font-urdu text-sm font-bold text-agroorange-400">ہارون زرعی مرکز • پل 88، شادی خان منڈا، کوٹ ادو</p>
+      <p>© 2026 جملہ حقوق محفوظ ہیں۔ زرعی ادویات و کھاد ڈیلر پورٹل۔</p>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript App -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
