@@ -2676,9 +2676,103 @@ async function loadAdminSettings() {
         document.getElementById('set-pin').value = s.adminPin || '';
       }
       updateAdminWaTestBtn(s.whatsapp || s.phone);
+
+      // Load active Urdu font selection
+      const font = s.urduFont || 'noto-sans';
+      selectUrduFontCard(font, false);
     }
   } catch (err) {
     console.error('Settings load error:', err);
+  }
+}
+
+// Global Urdu Typography Controller
+function applyUrduFont(fontKey) {
+  if (!fontKey) fontKey = 'noto-sans';
+  document.documentElement.setAttribute('data-urdu-font', fontKey);
+  const fontMap = {
+    'noto-sans': { family: "'Noto Sans Arabic', 'Inter', sans-serif", line: '1.6' },
+    'gulzar': { family: "'Gulzar', 'Inter', serif", line: '2.1' },
+    'amiri': { family: "'Amiri', 'Inter', serif", line: '1.75' },
+    'noto-nastaliq': { family: "'Noto Nastaliq Urdu', 'Inter', serif", line: '2.1' },
+    'vazirmatn': { family: "'Vazirmatn', 'Inter', sans-serif", line: '1.6' }
+  };
+  const font = fontMap[fontKey] || fontMap['noto-sans'];
+  document.documentElement.style.setProperty('--font-urdu', font.family);
+  document.documentElement.style.setProperty('--font-urdu-line-height', font.line);
+  document.body.className = (document.body.className || '').replace(/\bfont-[a-z-]+\b/g, '') + ' font-' + fontKey;
+}
+
+function selectUrduFontCard(fontKey, saveImmediately = false) {
+  if (!fontKey) fontKey = 'noto-sans';
+  const inputEl = document.getElementById('set-urdu-font');
+  if (inputEl) inputEl.value = fontKey;
+
+  // Header select sync
+  const headerSelect = document.getElementById('header-font-select');
+  if (headerSelect) headerSelect.value = fontKey;
+
+  // Update card visuals
+  const allKeys = ['noto-sans', 'gulzar', 'amiri', 'noto-nastaliq', 'vazirmatn'];
+  allKeys.forEach(k => {
+    const card = document.getElementById(`font-card-${k}`);
+    if (card) {
+      const check = card.querySelector('.font-check');
+      if (k === fontKey) {
+        card.classList.remove('border-gray-200');
+        card.classList.add('border-2', 'border-emerald-500', 'bg-emerald-50/20');
+        if (check) check.classList.remove('hidden');
+      } else {
+        card.classList.remove('border-2', 'border-emerald-500', 'bg-emerald-50/20');
+        card.classList.add('border', 'border-gray-200');
+        if (check) check.classList.add('hidden');
+      }
+    }
+  });
+
+  // Update live preview container in settings
+  const previewBox = document.getElementById('live-font-preview-container');
+  if (previewBox) {
+    previewBox.className = `font-${fontKey} space-y-2`;
+  }
+  const previewLabel = document.getElementById('preview-font-label');
+  const labels = {
+    'noto-sans': '1. Noto Sans Arabic (ماڈرن نسخ)',
+    'gulzar': '2. Gulzar (جدید نستعلیق)',
+    'amiri': '3. Amiri (کلاسک نسخ)',
+    'noto-nastaliq': '4. Noto Nastaliq Urdu (روایتی)',
+    'vazirmatn': '5. Vazirmatn (ٹیک اسٹائل)'
+  };
+  if (previewLabel) previewLabel.innerText = labels[fontKey] || fontKey;
+
+  // Apply to current document typography in real-time
+  applyUrduFont(fontKey);
+
+  if (saveImmediately) {
+    saveActiveFontDirectly();
+  }
+}
+
+function quickSwitchAdminFont(fontKey) {
+  selectUrduFontCard(fontKey, true);
+}
+
+async function saveActiveFontDirectly() {
+  const fontKey = (document.getElementById('set-urdu-font') && document.getElementById('set-urdu-font').value) || 'noto-sans';
+  try {
+    const res = await adminFetch('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ urduFont: fontKey })
+    });
+    if (res.ok) {
+      const alertBox = document.getElementById('settings-alert');
+      if (alertBox) {
+        alertBox.className = "p-3 rounded-xl bg-emerald-100 text-emerald-950 border border-emerald-400 text-xs font-bold block shadow-2xs";
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> اردو فونٹ <strong>"${fontKey}"</strong> کامیابی سے منتخب ہو کر محفوظ ہو گیا! کسٹمر پورٹل اور ایڈمن دونوں پر یہ فونٹ لاگو ہو چکا ہے۔`;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to save font:', e);
   }
 }
 
@@ -2864,7 +2958,8 @@ function setupAdminForms() {
       address: document.getElementById('set-address').value.trim(),
       announcement: document.getElementById('set-announcement').value.trim(),
       adminPassword: passVal,
-      adminPin: pinVal
+      adminPin: pinVal,
+      urduFont: document.getElementById('set-urdu-font') ? document.getElementById('set-urdu-font').value : 'noto-sans'
     };
 
     if (submitBtn) {

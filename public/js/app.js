@@ -6,6 +6,23 @@ let globalProducts = [];
 let currentCategory = 'all';
 let currentLoadedFarmer = null;
 
+// Global Urdu Typography Controller for Customer Portal
+function applyUrduFont(fontKey) {
+  if (!fontKey) fontKey = 'noto-sans';
+  document.documentElement.setAttribute('data-urdu-font', fontKey);
+  const fontMap = {
+    'noto-sans': { family: "'Noto Sans Arabic', 'Inter', sans-serif", line: '1.6' },
+    'gulzar': { family: "'Gulzar', 'Inter', serif", line: '2.1' },
+    'amiri': { family: "'Amiri', 'Inter', serif", line: '1.75' },
+    'noto-nastaliq': { family: "'Noto Nastaliq Urdu', 'Inter', serif", line: '2.1' },
+    'vazirmatn': { family: "'Vazirmatn', 'Inter', sans-serif", line: '1.6' }
+  };
+  const font = fontMap[fontKey] || fontMap['noto-sans'];
+  document.documentElement.style.setProperty('--font-urdu', font.family);
+  document.documentElement.style.setProperty('--font-urdu-line-height', font.line);
+  document.body.className = (document.body.className || '').replace(/\bfont-[a-z-]+\b/g, '') + ' font-' + fontKey;
+}
+
 // Initialize on document ready
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
@@ -78,6 +95,9 @@ async function loadSettings() {
     const res = await fetch('/api/settings');
     if (res.ok) {
       globalSettings = await res.json();
+      
+      // Apply active Urdu font chosen by Admin
+      applyUrduFont(globalSettings.urduFont || 'noto-sans');
       
       const phone = globalSettings.phone || '0300-7654321';
       const cleanTel = cleanTelNumber(phone);

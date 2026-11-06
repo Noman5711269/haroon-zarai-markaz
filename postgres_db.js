@@ -82,7 +82,8 @@ class PostgresDB {
           address: s.address,
           adminPin: s.admin_pin,
           adminPassword: s.admin_password || 'admin123',
-          announcement: s.announcement
+          announcement: s.announcement,
+          urduFont: s.urdu_font || 'noto-sans'
         };
       }
     } catch (err) {
@@ -98,20 +99,22 @@ class PostgresDB {
       address: "پل 88، شادی خان منڈا، کوٹ ادو (PULL 88, Shadi Khan Munda, Kot Addu)",
       adminPin: "1234",
       adminPassword: "admin123",
-      announcement: "🌾 خوشخبری: گندم، سفید تل اور سورج مکھی کی بہترین نرخوں پر نقد خریداری جاری ہے! تصدیق شدہ بیج اور معیاری ادویات رعایت پر دستیاب ہیں۔"
+      announcement: "🌾 خوشخبری: گندم، سفید تل اور سورج مکھی کی بہترین نرخوں پر نقد خریداری جاری ہے! تصدیق شدہ بیج اور معیاری ادویات رعایت پر دستیاب ہیں۔",
+      urduFont: "noto-sans"
     };
   }
 
   async updateSettings(data) {
     try {
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_password TEXT DEFAULT 'admin123';`);
+      await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS urdu_font TEXT DEFAULT 'noto-sans';`);
     } catch (e) {}
 
     const current = await this.getSettings();
     const updated = { ...current, ...data };
     await this.query(`
-      INSERT INTO settings (id, business_name, business_name_en, tagline, owner_name, phone, whatsapp, address, admin_pin, admin_password, announcement, updated_at)
-      VALUES ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+      INSERT INTO settings (id, business_name, business_name_en, tagline, owner_name, phone, whatsapp, address, admin_pin, admin_password, announcement, urdu_font, updated_at)
+      VALUES ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
       ON CONFLICT (id) DO UPDATE SET
         business_name = EXCLUDED.business_name,
         business_name_en = EXCLUDED.business_name_en,
@@ -123,6 +126,7 @@ class PostgresDB {
         admin_pin = EXCLUDED.admin_pin,
         admin_password = EXCLUDED.admin_password,
         announcement = EXCLUDED.announcement,
+        urdu_font = EXCLUDED.urdu_font,
         updated_at = NOW()
     `, [
       updated.businessName,
@@ -134,7 +138,8 @@ class PostgresDB {
       updated.address,
       updated.adminPin,
       updated.adminPassword || 'admin123',
-      updated.announcement
+      updated.announcement,
+      updated.urduFont || 'noto-sans'
     ]);
     return this.getSettings();
   }

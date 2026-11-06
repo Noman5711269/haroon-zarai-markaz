@@ -165,6 +165,19 @@
           </div>
 
           <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Quick Urdu Font Selector in Header -->
+            <div class="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-2.5 py-1.5 rounded-xl border border-white/20 text-xs font-bold text-white transition">
+              <i class="fa-solid fa-font text-amber-300 text-xs"></i>
+              <span class="text-[11px] text-agroyellow-200">فونٹ:</span>
+              <select id="header-font-select" onchange="quickSwitchAdminFont(this.value)" class="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer">
+                <option value="noto-sans" class="text-gray-900 font-noto-sans">1. Noto Sans (ماڈرن نسخ) ⭐</option>
+                <option value="gulzar" class="text-gray-900 font-gulzar">2. Gulzar (جدید نستعلیق)</option>
+                <option value="amiri" class="text-gray-900 font-amiri">3. Amiri (کلاسک نسخ)</option>
+                <option value="noto-nastaliq" class="text-gray-900 font-noto-nastaliq">4. Noto Nastaliq (روایتی)</option>
+                <option value="vazirmatn" class="text-gray-900 font-vazirmatn">5. Vazirmatn (ٹیک اسٹائل)</option>
+              </select>
+            </div>
+
             <button onclick="openAddProductModal()" class="bg-gradient-to-r from-agroorange-500 to-amber-500 hover:from-agroorange-600 hover:to-amber-600 text-white text-xs sm:text-sm font-black px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-agroorange-900/30 transition hover:scale-105 cursor-pointer">
               <i class="fa-solid fa-plus-circle text-sm text-yellow-200"></i>
               <span>+ نئی پراڈکٹ ایڈ کریں</span>
@@ -1807,6 +1820,111 @@
               <span class="bg-indigo-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1">
                 <i class="fa-solid fa-circle-check"></i> محفوظ ہے (Active)
               </span>
+            </div>
+
+            <!-- ================= URDU FONT SELECTION & LIVE PREVIEW ================= -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 border-2 border-emerald-300 space-y-4">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h3 class="text-sm md:text-base font-black text-emerald-950 flex items-center gap-2">
+                    <i class="fa-solid fa-font text-emerald-600"></i>
+                    <span>ویب سائٹ و کسٹمر پورٹل کا اردو فونٹ (Urdu Typography)</span>
+                  </h3>
+                  <p class="text-[11px] md:text-xs text-emerald-800 mt-0.5">
+                    یہاں سے اپنی مرضی کا فونٹ چنیں۔ جو فونٹ آپ سلیکٹ کریں گے، وہ کسٹمر پورٹل اور ایڈمن پورٹل دونوں پر لاگو ہوگا۔
+                  </p>
+                </div>
+                <span class="text-[11px] font-bold bg-emerald-600 text-white px-2.5 py-1 rounded-full shadow-2xs">5 آپشنز</span>
+              </div>
+
+              <input type="hidden" id="set-urdu-font" value="noto-sans">
+
+              <!-- 5 Interactive Font Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="font-selection-cards">
+                <!-- Card 1: Noto Sans -->
+                <div onclick="selectUrduFontCard('noto-sans')" id="font-card-noto-sans" class="font-card cursor-pointer p-3 rounded-xl border-2 border-emerald-500 bg-white shadow-sm transition hover:scale-[1.01] relative">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-bold text-gray-800">1. Noto Sans Arabic</span>
+                    <span class="font-check text-emerald-600"><i class="fa-solid fa-circle-check"></i></span>
+                  </div>
+                  <p class="font-noto-sans text-sm font-bold text-emerald-900 leading-snug">ہارون زرعی مرکز (ماڈرن نسخ)</p>
+                  <span class="text-[10px] text-gray-500 mt-0.5 block">صاف ترین، موبائل فرینڈلی، بٹن اور کھاتہ کبھی نہیں کٹتا ⭐</span>
+                </div>
+
+                <!-- Card 2: Gulzar -->
+                <div onclick="selectUrduFontCard('gulzar')" id="font-card-gulzar" class="font-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-white hover:border-amber-400 shadow-2xs transition hover:scale-[1.01] relative">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-bold text-gray-800">2. Gulzar</span>
+                    <span class="font-check text-emerald-600 hidden"><i class="fa-solid fa-circle-check"></i></span>
+                  </div>
+                  <p class="font-gulzar text-base font-bold text-amber-900 leading-snug">ہارون زرعی مرکز (جدید نستعلیق)</p>
+                  <span class="text-[10px] text-gray-500 mt-0.5 block">روایتی خوشخطی، کتابی گول دائرے اور دلکش نوری لک</span>
+                </div>
+
+                <!-- Card 3: Amiri -->
+                <div onclick="selectUrduFontCard('amiri')" id="font-card-amiri" class="font-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-white hover:border-blue-400 shadow-2xs transition hover:scale-[1.01] relative">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-bold text-gray-800">3. Amiri</span>
+                    <span class="font-check text-emerald-600 hidden"><i class="fa-solid fa-circle-check"></i></span>
+                  </div>
+                  <p class="font-amiri text-base font-bold text-blue-900 leading-snug">ہارون زرعی مرکز (کلاسک نسخ)</p>
+                  <span class="text-[10px] text-gray-500 mt-0.5 block">سنجیدہ، وقار اور رسمی کھاتہ داری کے لیے موزوں</span>
+                </div>
+
+                <!-- Card 4: Noto Nastaliq -->
+                <div onclick="selectUrduFontCard('noto-nastaliq')" id="font-card-noto-nastaliq" class="font-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-white hover:border-purple-400 shadow-2xs transition hover:scale-[1.01] relative">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-bold text-gray-800">4. Noto Nastaliq Urdu</span>
+                    <span class="font-check text-emerald-600 hidden"><i class="fa-solid fa-circle-check"></i></span>
+                  </div>
+                  <p class="font-noto-nastaliq text-base font-bold text-purple-900 leading-snug">ہارون زرعی مرکز (موجودہ فونٹ)</p>
+                  <span class="text-[10px] text-gray-500 mt-0.5 block">روایتی اخبارات جیسا نوری نستعلیق انداز</span>
+                </div>
+
+                <!-- Card 5: Vazirmatn -->
+                <div onclick="selectUrduFontCard('vazirmatn')" id="font-card-vazirmatn" class="font-card cursor-pointer p-3 rounded-xl border border-gray-200 bg-white hover:border-teal-400 shadow-2xs transition hover:scale-[1.01] relative sm:col-span-2">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-bold text-gray-800">5. Vazirmatn</span>
+                    <span class="font-check text-emerald-600 hidden"><i class="fa-solid fa-circle-check"></i></span>
+                  </div>
+                  <p class="font-vazirmatn text-sm font-bold text-teal-900 leading-snug">ہارون زرعی مرکز (جدید ٹیک اسٹائل)</p>
+                  <span class="text-[10px] text-gray-500 mt-0.5 block">جدید جیومیٹرک، آئی فون اور بین الاقوامی موبائل ایپس جیسا لک</span>
+                </div>
+              </div>
+
+              <!-- Real-time Live Preview Box -->
+              <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-2xs">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+                  <span class="text-xs font-black text-gray-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-eye text-emerald-600"></i> منتخب شدہ فونٹ کا لائیو نمونہ (Live Preview):
+                  </span>
+                  <span id="preview-font-label" class="text-[11px] font-mono font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">Noto Sans Arabic</span>
+                </div>
+
+                <div id="live-font-preview-container" class="font-noto-sans space-y-2">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h4 class="text-base md:text-lg font-black text-gray-900">ہارون زرعی مرکز — کسان کی خوشحالی، ہماری اولین ترجیح</h4>
+                    <span class="text-emerald-700 font-bold text-xs bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">سونا یوریا کھاد: Rs. 4,650</span>
+                  </div>
+                  <p class="text-xs text-gray-600">
+                    چوہدری محمد اکرم گجر (چک نمبر 54/EB) • کل سابقہ بقایا کھاتہ: <strong class="text-rose-600 font-bold">Rs. 45,000</strong>
+                  </p>
+                  <div class="flex flex-wrap gap-2 pt-1">
+                    <span class="bg-emerald-600 text-white text-[11px] font-bold px-3 py-1 rounded-lg shadow-2xs">نیا کسان شامل کریں</span>
+                    <span class="bg-amber-500 text-gray-900 text-[11px] font-bold px-3 py-1 rounded-lg shadow-2xs">کھاتہ پرنٹ کریں</span>
+                    <span class="bg-gray-100 text-gray-800 text-[11px] font-bold px-3 py-1 rounded-lg border border-gray-200">ادائیگی وصولی</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <a href="/font-preview.html" target="_blank" class="text-xs text-emerald-700 hover:text-emerald-800 font-bold underline flex items-center gap-1">
+                  <i class="fa-solid fa-up-right-from-square text-[10px]"></i> فل اسکرین فونٹ پریویو پیج الگ سے کھولیں
+                </a>
+                <button type="button" onclick="saveActiveFontDirectly()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-2xs transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-check"></i> <span>یہ فونٹ ابھی کسٹمر پورٹل پر لاگو کریں</span>
+                </button>
+              </div>
             </div>
 
             <div id="settings-alert" class="hidden p-3 rounded-xl text-xs font-bold"></div>

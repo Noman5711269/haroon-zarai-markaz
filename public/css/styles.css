@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&family=Gulzar&family=Amiri:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap');
 
 :root {
   --primary-light-green: #22c55e;
@@ -10,7 +10,40 @@
   --accent-orange: #f97316;
   --accent-orange-dark: #ea580c;
   --accent-yellow: #f59e0b;
+
+  /* Dynamic Urdu Typography */
+  --font-urdu: 'Noto Sans Arabic', 'Inter', sans-serif;
+  --font-urdu-line-height: 1.6;
 }
+
+/* 5 Selectable Urdu Font Themes */
+body.font-noto-sans, [data-urdu-font="noto-sans"] {
+  --font-urdu: 'Noto Sans Arabic', 'Inter', sans-serif;
+  --font-urdu-line-height: 1.6;
+}
+body.font-gulzar, [data-urdu-font="gulzar"] {
+  --font-urdu: 'Gulzar', 'Inter', serif;
+  --font-urdu-line-height: 2.1;
+}
+body.font-amiri, [data-urdu-font="amiri"] {
+  --font-urdu: 'Amiri', 'Inter', serif;
+  --font-urdu-line-height: 1.75;
+}
+body.font-noto-nastaliq, [data-urdu-font="noto-nastaliq"] {
+  --font-urdu: 'Noto Nastaliq Urdu', 'Inter', serif;
+  --font-urdu-line-height: 2.1;
+}
+body.font-vazirmatn, [data-urdu-font="vazirmatn"] {
+  --font-urdu: 'Vazirmatn', 'Inter', sans-serif;
+  --font-urdu-line-height: 1.6;
+}
+
+/* Standalone Font Classes */
+.font-noto-sans { font-family: 'Noto Sans Arabic', sans-serif !important; line-height: 1.6 !important; }
+.font-gulzar { font-family: 'Gulzar', serif !important; line-height: 2.1 !important; }
+.font-amiri { font-family: 'Amiri', serif !important; line-height: 1.75 !important; }
+.font-noto-nastaliq { font-family: 'Noto Nastaliq Urdu', serif !important; line-height: 2.1 !important; }
+.font-vazirmatn { font-family: 'Vazirmatn', sans-serif !important; line-height: 1.6 !important; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -22,6 +55,7 @@ body {
 [dir="rtl"] body, body.rtl {
   direction: rtl;
   text-align: right;
+  font-family: var(--font-urdu);
 }
 
 [dir="ltr"] body, body.ltr {
@@ -29,25 +63,15 @@ body {
   text-align: left;
 }
 
-[dir="rtl"] .font-urdu {
-  font-family: 'Noto Nastaliq Urdu', 'Inter', serif;
-  line-height: 1.9;
+[dir="rtl"] .font-urdu, [dir="rtl"] .font-urdu-clean {
+  font-family: var(--font-urdu);
+  line-height: var(--font-urdu-line-height);
 }
 
-[dir="ltr"] .font-urdu {
+[dir="ltr"] .font-urdu, [dir="ltr"] .font-urdu-clean {
   font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.35;
   letter-spacing: -0.01em;
-}
-
-[dir="rtl"] .font-urdu-clean {
-  font-family: 'Noto Nastaliq Urdu', -apple-system, sans-serif;
-  line-height: 1.8;
-}
-
-[dir="ltr"] .font-urdu-clean {
-  font-family: 'Inter', system-ui, sans-serif;
-  line-height: 1.4;
 }
 
 [dir="ltr"] .ltr-flip {
