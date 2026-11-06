@@ -807,6 +807,65 @@ function clearModalTransactionsFilter() {
   }
 }
 
+function formatStandardMobile(mobile) {
+  if (!mobile) return '';
+  let str = String(mobile).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '');
+  if (str.length >= 10) {
+    return '0' + str.slice(-10);
+  }
+  return str;
+}
+
+function isSameMobile(m1, m2) {
+  if (!m1 || !m2) return false;
+  const s1 = formatStandardMobile(m1);
+  const s2 = formatStandardMobile(m2);
+  if (!s1 || !s2) return false;
+  return s1 === s2;
+}
+
+function resetFarmerMobileValidation() {
+  const warnBox = document.getElementById('farmer-mobile-dup-warn');
+  const warnText = document.getElementById('farmer-mobile-dup-text');
+  const mobInput = document.getElementById('farmer-mobile');
+  if (warnBox) warnBox.classList.add('hidden');
+  if (warnText) warnText.innerText = '';
+  if (mobInput) {
+    mobInput.classList.remove('border-rose-500', 'bg-rose-50', 'text-rose-700', 'ring-2', 'ring-rose-400');
+  }
+}
+
+function checkFarmerMobileDuplicate(val, editingFarmerId) {
+  const warnBox = document.getElementById('farmer-mobile-dup-warn');
+  const warnText = document.getElementById('farmer-mobile-dup-text');
+  const mobInput = document.getElementById('farmer-mobile');
+
+  const clean = formatStandardMobile(val);
+  if (!clean || clean.length < 10) {
+    resetFarmerMobileValidation();
+    return null;
+  }
+
+  const dup = (allFarmersCache || []).find(f => {
+    if (editingFarmerId && f.id === editingFarmerId) return false;
+    return isSameMobile(f.mobile, val);
+  });
+
+  if (dup) {
+    if (warnBox && warnText) {
+      warnText.innerHTML = `یہ موبائل نمبر پہلے سے کسان <strong>"${escapeHtml(dup.name)}"</strong> (کھاتہ: ${escapeHtml(dup.id)}${dup.village ? ' - ' + escapeHtml(dup.village) : ''}) کے نام پر درج ہے! ایک ہی موبائل نمبر پر دو مختلف کسانوں کا کھاتہ نہیں کھل سکتا۔`;
+      warnBox.classList.remove('hidden');
+    }
+    if (mobInput) {
+      mobInput.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-700', 'ring-2', 'ring-rose-400');
+    }
+    return dup;
+  } else {
+    resetFarmerMobileValidation();
+    return null;
+  }
+}
+
 function openAddFarmerModal() {
   document.getElementById('form-farmer').reset();
   document.getElementById('farmer-edit-id').value = '';
@@ -814,6 +873,7 @@ function openAddFarmerModal() {
   if (passInp) passInp.value = '';
   document.getElementById('modal-farmer-title').innerText = 'نیا کسان کھاتہ درج کریں';
   document.getElementById('farmer-initial-balance-container').classList.remove('hidden');
+  resetFarmerMobileValidation();
   openModal('modal-farmer');
 }
 
@@ -833,6 +893,7 @@ function editFarmer(id) {
   document.getElementById('farmer-notes').value = f.notes || '';
   document.getElementById('farmer-initial-balance-container').classList.add('hidden');
   document.getElementById('modal-farmer-title').innerText = `کسان ایڈٹ کریں: ${f.name} (${f.id})`;
+  resetFarmerMobileValidation();
   openModal('modal-farmer');
 }
 
@@ -2778,15 +2839,37 @@ async function saveActiveFontDirectly() {
 
 // Setup form submit handlers
 function setupAdminForms() {
+  // Real-time Mobile Number duplicate checking
+  const farmerMobileInput = document.getElementById('farmer-mobile');
+  if (farmerMobileInput) {
+    const runMobileDupCheck = () => {
+      const editId = document.getElementById('farmer-edit-id')?.value;
+      checkFarmerMobileDuplicate(farmerMobileInput.value, editId);
+    };
+    farmerMobileInput.addEventListener('input', runMobileDupCheck);
+    farmerMobileInput.addEventListener('change', runMobileDupCheck);
+    farmerMobileInput.addEventListener('blur', runMobileDupCheck);
+  }
+
   // Farmer Add / Edit
   document.getElementById('form-farmer').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('farmer-edit-id').value;
+    const mobileVal = document.getElementById('farmer-mobile').value.trim();
+
+    // Frontend validation: prevent duplicate mobile number
+    const duplicate = checkFarmerMobileDuplicate(mobileVal, id);
+    if (duplicate) {
+      alert(`⚠️ یہ موبائل نمبر (${mobileVal}) پہلے سے کسان "${duplicate.name}" (کھاتہ نمبر: ${duplicate.id}) کے نام پر درج ہے!\n\nایک موبائل نمبر پر دو مختلف کسانوں کا کھاتہ نہیں کھل سکتا۔ برائے مہربانی درست یا دوسرا موبائل نمبر درج کریں۔`);
+      document.getElementById('farmer-mobile').focus();
+      return;
+    }
+
     const passVal = (document.getElementById('farmer-password')?.value || '').trim();
     const body = {
       name: document.getElementById('farmer-name').value.trim(),
       fatherName: document.getElementById('farmer-father').value.trim(),
-      mobile: document.getElementById('farmer-mobile').value.trim(),
+      mobile: mobileVal,
       cnic: document.getElementById('farmer-cnic').value.trim(),
       landAcres: document.getElementById('farmer-acres').value,
       village: document.getElementById('farmer-village').value.trim(),
@@ -2803,11 +2886,13 @@ function setupAdminForms() {
       if (res.ok) {
         alert(id ? 'کسان کا ریکارڈ کامیابی سے اپڈیٹ (Edit) ہو گیا!' : 'نیا کسان کھاتہ کامیابی سے محفوظ ہو گیا!');
         closeModal('modal-farmer');
+        resetFarmerMobileValidation();
         loadAllFarmers();
         loadAdminStats();
         loadFarmerLogins();
       } else {
-        alert('کسان ریکارڈ محفوظ کرنے میں خرابی واقع ہوئی۔');
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'کسان ریکارڈ محفوظ کرنے میں خرابی واقع ہوئی۔');
       }
     } catch (err) {
       alert('سرور سے رابطہ نہ ہو سکا۔');

@@ -124,6 +124,24 @@ function checkAdminAuth(req) {
   return false;
 }
 
+// Phone number normalization & duplicate detection helper
+function formatStandardMobile(mobile) {
+  if (!mobile) return '';
+  let str = String(mobile).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '');
+  if (str.length >= 10) {
+    return '0' + str.slice(-10);
+  }
+  return str;
+}
+
+function isSameMobile(m1, m2) {
+  if (!m1 || !m2) return false;
+  const s1 = formatStandardMobile(m1);
+  const s2 = formatStandardMobile(m2);
+  if (!s1 || !s2) return false;
+  return s1 === s2;
+}
+
 // Static file server
 function serveStatic(req, res, parsedUrl) {
   let pathname = parsedUrl.pathname;
@@ -622,12 +640,39 @@ const server = http.createServer(async (req, res) => {
         }
         if (method === 'POST') {
           const body = await parseJsonBody(req);
+
+          // Unique mobile validation: prevent reusing an existing farmer's phone number
+          if (body.mobile && String(body.mobile).trim()) {
+            let allFarmers = [];
+            try {
+              allFarmers = await db.getFarmers();
+            } catch (e) {
+              allFarmers = localDb.getFarmers();
+            }
+            const dup = allFarmers.find(f => isSameMobile(f.mobile, body.mobile));
+            if (dup) {
+              return sendJson(res, 400, {
+                error: `یہ موبائل نمبر (${body.mobile}) پہلے سے کسان "${dup.name}" (کھاتہ نمبر: ${dup.id}) کے نام پر درج ہے! ایک موبائل نمبر پر دوسرا کھاتہ نہیں کھل سکتا۔`
+              });
+            }
+          }
+
           let newFarmer;
           try {
             newFarmer = await db.addFarmer(body);
           } catch (e) {
+            if (e.isDuplicate || e.statusCode === 400) {
+              return sendJson(res, 400, { error: e.message });
+            }
             console.warn('DB addFarmer error, fallback to localDb:', e.message);
-            newFarmer = localDb.addFarmer(body);
+            try {
+              newFarmer = localDb.addFarmer(body);
+            } catch (errLocal) {
+              if (errLocal.isDuplicate || errLocal.statusCode === 400) {
+                return sendJson(res, 400, { error: errLocal.message });
+              }
+              throw errLocal;
+            }
           }
           try {
             if (db !== localDb && newFarmer) {
@@ -654,12 +699,39 @@ const server = http.createServer(async (req, res) => {
         }
         if (method === 'PUT') {
           const body = await parseJsonBody(req);
+
+          // Unique mobile validation on update: ensure another farmer does not already have this number
+          if (body.mobile && String(body.mobile).trim()) {
+            let allFarmers = [];
+            try {
+              allFarmers = await db.getFarmers();
+            } catch (e) {
+              allFarmers = localDb.getFarmers();
+            }
+            const dup = allFarmers.find(f => f.id !== farmerId && isSameMobile(f.mobile, body.mobile));
+            if (dup) {
+              return sendJson(res, 400, {
+                error: `یہ موبائل نمبر (${body.mobile}) پہلے سے کسان "${dup.name}" (کھاتہ نمبر: ${dup.id}) کے نام پر درج ہے! ایک موبائل نمبر پر دو کسانوں کا ریکارڈ نہیں ہو سکتا۔`
+              });
+            }
+          }
+
           let updated;
           try {
             updated = await db.updateFarmer(farmerId, body);
           } catch (e) {
+            if (e.isDuplicate || e.statusCode === 400) {
+              return sendJson(res, 400, { error: e.message });
+            }
             console.warn('DB updateFarmer error, fallback to localDb:', e.message);
-            updated = localDb.updateFarmer(farmerId, body);
+            try {
+              updated = localDb.updateFarmer(farmerId, body);
+            } catch (errLocal) {
+              if (errLocal.isDuplicate || errLocal.statusCode === 400) {
+                return sendJson(res, 400, { error: errLocal.message });
+              }
+              throw errLocal;
+            }
           }
           try {
             if (db !== localDb) localDb.updateFarmer(farmerId, body);

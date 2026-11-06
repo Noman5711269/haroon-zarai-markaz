@@ -7,6 +7,23 @@
 const { Pool } = require('pg');
 const localDb = require('./database');
 
+function formatStandardMobile(mobile) {
+  if (!mobile) return '';
+  let str = String(mobile).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '');
+  if (str.length >= 10) {
+    return '0' + str.slice(-10);
+  }
+  return str;
+}
+
+function isSameMobile(m1, m2) {
+  if (!m1 || !m2) return false;
+  const s1 = formatStandardMobile(m1);
+  const s2 = formatStandardMobile(m2);
+  if (!s1 || !s2) return false;
+  return s1 === s2;
+}
+
 class PostgresDB {
   constructor(connectionString) {
     this.rawConnString = connectionString || process.env.DATABASE_URL || '';
@@ -569,6 +586,15 @@ class PostgresDB {
 
   async addFarmer(farmerData) {
     const farmers = await this.getFarmers();
+    if (farmerData.mobile && String(farmerData.mobile).trim()) {
+      const dup = farmers.find(f => isSameMobile(f.mobile, farmerData.mobile));
+      if (dup) {
+        const err = new Error(`یہ موبائل نمبر (${farmerData.mobile}) پہلے سے کسان "${dup.name}" (کھاتہ نمبر: ${dup.id}) کے نام پر درج ہے! ایک ہی موبائل نمبر پر دو مختلف کسانوں کا کھاتہ نہیں کھل سکتا۔`);
+        err.statusCode = 400;
+        err.isDuplicate = true;
+        throw err;
+      }
+    }
     const highestNum = farmers.reduce((max, f) => {
       const match = (f.id || '').match(/\d+/);
       const num = match ? parseInt(match[0], 10) : 100;
@@ -627,6 +653,16 @@ class PostgresDB {
   async updateFarmer(id, farmerData) {
     const current = await this.getFarmerById(id);
     if (!current) return null;
+    if (farmerData.mobile && String(farmerData.mobile).trim()) {
+      const farmers = await this.getFarmers();
+      const dup = farmers.find(f => f.id !== id && isSameMobile(f.mobile, farmerData.mobile));
+      if (dup) {
+        const err = new Error(`یہ موبائل نمبر (${farmerData.mobile}) پہلے سے کسان "${dup.name}" (کھاتہ نمبر: ${dup.id}) کے نام پر درج ہے! ایک ہی موبائل نمبر پر دو مختلف کسانوں کا کھاتہ نہیں کھل سکتا۔`);
+        err.statusCode = 400;
+        err.isDuplicate = true;
+        throw err;
+      }
+    }
     const updated = { ...current, ...farmerData };
 
     const newPass = farmerData.password !== undefined 

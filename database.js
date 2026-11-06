@@ -285,6 +285,23 @@ const initialData = {
 };
 
 // Database helper functions
+function formatStandardMobile(mobile) {
+  if (!mobile) return '';
+  let str = String(mobile).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '');
+  if (str.length >= 10) {
+    return '0' + str.slice(-10);
+  }
+  return str;
+}
+
+function isSameMobile(m1, m2) {
+  if (!m1 || !m2) return false;
+  const s1 = formatStandardMobile(m1);
+  const s2 = formatStandardMobile(m2);
+  if (!s1 || !s2) return false;
+  return s1 === s2;
+}
+
 class Database {
   constructor() {
     this.ensureInitialized();
@@ -762,6 +779,15 @@ class Database {
 
   addFarmer(farmerData) {
     const db = this.read();
+    if (farmerData.mobile && String(farmerData.mobile).trim()) {
+      const dup = (db.farmers || []).find(f => isSameMobile(f.mobile, farmerData.mobile));
+      if (dup) {
+        const err = new Error(`یہ موبائل نمبر (${farmerData.mobile}) پہلے سے کسان "${dup.name}" (کھاتہ نمبر: ${dup.id}) کے نام پر درج ہے! ایک ہی موبائل نمبر پر دو مختلف کسانوں کا کھاتہ نہیں کھل سکتا۔`);
+        err.statusCode = 400;
+        err.isDuplicate = true;
+        throw err;
+      }
+    }
     // Generate farmer ID like HZM-105
     const highestNum = db.farmers.reduce((max, f) => {
       const match = f.id.match(/\d+/);
@@ -811,6 +837,15 @@ class Database {
     const db = this.read();
     const index = db.farmers.findIndex(f => f.id === id);
     if (index !== -1) {
+      if (farmerData.mobile && String(farmerData.mobile).trim()) {
+        const dup = (db.farmers || []).find(f => f.id !== id && isSameMobile(f.mobile, farmerData.mobile));
+        if (dup) {
+          const err = new Error(`یہ موبائل نمبر (${farmerData.mobile}) پہلے سے کسان "${dup.name}" (کھاتہ نمبر: ${dup.id}) کے نام پر درج ہے! ایک ہی موبائل نمبر پر دو مختلف کسانوں کا کھاتہ نہیں کھل سکتا۔`);
+          err.statusCode = 400;
+          err.isDuplicate = true;
+          throw err;
+        }
+      }
       // Don't overwrite transactions or ID directly through simple edit
       const current = db.farmers[index];
       const newPass = farmerData.password !== undefined 
