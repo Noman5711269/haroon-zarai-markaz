@@ -11,9 +11,9 @@
   --accent-orange-dark: #ea580c;
   --accent-yellow: #f59e0b;
 
-  /* Dynamic Urdu Typography */
-  --font-urdu: 'Noto Sans Arabic', 'Inter', sans-serif;
-  --font-urdu-line-height: 1.6;
+  /* Dynamic Urdu Typography - Option 2: Gulzar (Selected by User) */
+  --font-urdu: 'Gulzar', 'Noto Nastaliq Urdu', 'Inter', serif;
+  --font-urdu-line-height: 2.05;
 }
 
 /* 5 Selectable Urdu Font Themes */

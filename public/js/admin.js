@@ -2678,7 +2678,7 @@ async function loadAdminSettings() {
       updateAdminWaTestBtn(s.whatsapp || s.phone);
 
       // Load active Urdu font selection
-      const font = s.urduFont || 'noto-sans';
+      const font = s.urduFont || 'gulzar';
       selectUrduFontCard(font, false);
     }
   } catch (err) {
@@ -2688,7 +2688,7 @@ async function loadAdminSettings() {
 
 // Global Urdu Typography Controller
 function applyUrduFont(fontKey) {
-  if (!fontKey) fontKey = 'noto-sans';
+  if (!fontKey) fontKey = 'gulzar';
   document.documentElement.setAttribute('data-urdu-font', fontKey);
   const fontMap = {
     'noto-sans': { family: "'Noto Sans Arabic', 'Inter', sans-serif", line: '1.6' },
