@@ -8,8 +8,6 @@ services:
     startCommand: node server.js
     envVars:
       - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
+        value: "postgresql://postgres:NOMAN5711%40%40@db.jsqqvfaayafevnombsau.supabase.co:5432/postgres"
       - key: ADMIN_PIN
         value: "339066"

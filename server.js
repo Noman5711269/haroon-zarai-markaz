@@ -29,7 +29,8 @@ if (fs.existsSync(envPath)) {
 }
 
 // Select Database: Supabase Cloud PostgreSQL, Supabase REST API, or Local JSON
-const DATABASE_URL = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
+const DEFAULT_DATABASE_URL = 'postgresql://postgres:NOMAN5711%40%40@db.jsqqvfaayafevnombsau.supabase.co:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || DEFAULT_DATABASE_URL;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
 

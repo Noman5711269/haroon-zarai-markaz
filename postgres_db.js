@@ -54,7 +54,16 @@ class PostgresDB {
   }
 
   async query(text, params = []) {
-    return this.pool.query(text, params);
+    try {
+      return await this.pool.query(text, params);
+    } catch (err) {
+      const msg = (err && err.message) || '';
+      if (msg.includes('Connection terminated') || msg.includes('timeout') || msg.includes('ECONNRESET') || msg.includes('closed')) {
+        console.warn('Supabase PG transient error, retrying query once...', msg);
+        return await this.pool.query(text, params);
+      }
+      throw err;
+    }
   }
 
   // --- 1. Settings ---
