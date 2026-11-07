@@ -148,9 +148,9 @@ function serveStatic(req, res, parsedUrl) {
   let pathname = parsedUrl.pathname;
   if (pathname === '/' || pathname === '') {
     pathname = '/index.html';
-  } else if (pathname === '/admin') {
+  } else if (pathname === '/admin' || pathname === '/admin/' || pathname === '/admin/index.html') {
     pathname = '/admin.html';
-  } else if (pathname === '/khata') {
+  } else if (pathname === '/khata' || pathname === '/khata/') {
     pathname = '/khata.html';
   } else if (pathname === '/adviyaat' || pathname === '/store' || pathname === '/products' || pathname === '/khaad' || pathname === '/fertilizer' || pathname === '/fertilizers' || pathname === '/beej' || pathname === '/seeds') {
     pathname = '/adviyaat.html';

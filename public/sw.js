@@ -1,5 +1,5 @@
-// Haroon Zarai Markaz PWA Service Worker (v1.1.0)
-const CACHE_NAME = 'hzm-pwa-v1.1.0';
+// Haroon Zarai Markaz PWA Service Worker (v1.2.0)
+const CACHE_NAME = 'hzm-pwa-v1.2.0';
 
 // Core static assets to pre-cache for instant loading & basic offline capability
 const CORE_ASSETS = [
@@ -142,11 +142,18 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           // Offline fallback
-          const cachedResponse = await caches.match(req);
+          const cachedResponse = await caches.match(req, { ignoreSearch: true });
           if (cachedResponse) return cachedResponse;
 
+          // If admin route, fallback to cached admin page
+          const reqPath = new URL(url).pathname;
+          if (reqPath.startsWith('/admin')) {
+            const fallbackAdmin = (await caches.match('/admin', { ignoreSearch: true })) || (await caches.match('/admin.html', { ignoreSearch: true }));
+            if (fallbackAdmin) return fallbackAdmin;
+          }
+
           // Fallback to cached home page
-          const fallbackHome = await caches.match('/');
+          const fallbackHome = await caches.match('/', { ignoreSearch: true });
           if (fallbackHome) return fallbackHome;
 
           return new Response(

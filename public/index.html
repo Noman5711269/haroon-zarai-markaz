@@ -86,6 +86,16 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+  <!-- Early Capture PWA Install Prompt -->
+  <script>
+    window._deferredPwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window._deferredPwaPrompt = e;
+      console.log('🌾 [PWA Head] Early beforeinstallprompt captured');
+    });
+  </script>
 </head>
 <body class="bg-[#fafcf8] text-gray-800 antialiased selection:bg-agroorange-500 selection:text-white">
 

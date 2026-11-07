@@ -4,8 +4,11 @@
 (function () {
   'use strict';
 
-  let deferredPrompt = null;
-  const PWA_DISMISS_KEY = 'hzm_pwa_dismissed';
+  const isAdmin = window.location.pathname.startsWith('/admin');
+  const PWA_DISMISS_KEY = isAdmin ? 'hzm_pwa_admin_dismissed' : 'hzm_pwa_customer_dismissed';
+
+  // Check if prompt was already captured by early head script
+  let deferredPrompt = window._deferredPwaPrompt || null;
 
   // 1. REGISTER SERVICE WORKER
   if ('serviceWorker' in navigator) {
@@ -14,8 +17,6 @@
         .register('/sw.js', { scope: '/' })
         .then((registration) => {
           console.log('🌾 [PWA] Service Worker registered with scope:', registration.scope);
-
-          // Check for service worker updates
           registration.onupdatefound = () => {
             const installingWorker = registration.installing;
             if (installingWorker) {
@@ -41,71 +42,98 @@
   if (isStandalone) {
     console.log('🌾 [PWA] Running in Standalone App mode');
     document.documentElement.classList.add('pwa-standalone');
-    return; // Don't show install banners if already installed
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.pwa-install-trigger').forEach((btn) => {
+        btn.classList.add('hidden');
+      });
+    });
   }
 
-  // 3. LISTEN FOR ANDROID & DESKTOP NATIVE INSTALL PROMPT
+  // 3. LISTEN FOR NATIVE BEFOREINSTALLPROMPT
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    window._deferredPwaPrompt = e;
     console.log('🌾 [PWA] beforeinstallprompt event captured');
 
-    // Show custom install UI unless dismissed recently
+    // Show custom install UI unless dismissed or already standalone
     const isDismissed = sessionStorage.getItem(PWA_DISMISS_KEY);
-    if (!isDismissed) {
-      setTimeout(showInstallBanner, 2000);
+    if (!isDismissed && !isStandalone) {
+      setTimeout(showInstallBanner, 1500);
     }
-
-    // Enable any standalone install buttons in header/footer
-    document.querySelectorAll('.pwa-install-trigger').forEach((btn) => {
-      btn.classList.remove('hidden');
-      btn.addEventListener('click', triggerInstallPrompt);
-    });
   });
 
-  // Check if running inside Admin portal
-  const isAdmin = window.location.pathname.startsWith('/admin');
-
-  // 4. TRIGGER NATIVE INSTALL
-  async function triggerInstallPrompt() {
-    if (!deferredPrompt) {
-      // If prompt not available (e.g. user manually clicked header install button)
-      showIosOrManualModal();
-      return;
-    }
-
-    deferredPrompt.prompt();
-    const choiceResult = await deferredPrompt.userChoice;
-    console.log('🌾 [PWA] User install choice:', choiceResult.outcome);
-
-    if (choiceResult.outcome === 'accepted') {
-      hideInstallBanner();
-      const successMsg = isAdmin
-        ? 'مبارک ہو! ایڈمن کنٹرول پینل ایپ کامیابی سے انسٹال ہو گئی ہے۔'
-        : 'مبارک ہو! ہارون زرعی مرکز ایپ کامیابی سے انسٹال ہو گئی ہے۔';
-      showCelebrationToast(successMsg);
-    }
-    deferredPrompt = null;
+  // Attach click listeners to all install trigger buttons
+  function attachButtonTriggers() {
+    document.querySelectorAll('.pwa-install-trigger').forEach((btn) => {
+      if (!isStandalone) {
+        btn.classList.remove('hidden');
+      }
+      btn.onclick = (e) => {
+        e.preventDefault();
+        triggerInstallPrompt();
+      };
+    });
   }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachButtonTriggers);
+  } else {
+    attachButtonTriggers();
+  }
+
+  // 4. TRIGGER NATIVE OR GUIDED INSTALL
+  async function triggerInstallPrompt() {
+    console.log('🌾 [PWA] triggerInstallPrompt called. deferredPrompt present?', !!deferredPrompt);
+
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        console.log('🌾 [PWA] User install choice:', choiceResult.outcome);
+
+        if (choiceResult.outcome === 'accepted') {
+          hideInstallBanner();
+          const successMsg = isAdmin
+            ? 'مبارک ہو! ایڈمن کنٹرول پینل ایپ کامیابی سے انسٹال ہو گئی ہے۔'
+            : 'مبارک ہو! ہارون زرعی مرکز ایپ کامیابی سے انسٹال ہو گئی ہے۔';
+          showCelebrationToast(successMsg);
+        }
+        deferredPrompt = null;
+        window._deferredPwaPrompt = null;
+        return;
+      } catch (err) {
+        console.warn('🌾 [PWA] Native prompt error:', err);
+      }
+    }
+
+    // If native prompt is not available (e.g. Chrome Desktop Omnibox, iOS Safari, or prompt not triggered)
+    showHelpfulInstallGuideModal();
+  }
+
+  // Expose global trigger immediately
+  window.triggerPwaInstall = triggerInstallPrompt;
 
   // 5. LISTEN FOR APP INSTALLED EVENT
   window.addEventListener('appinstalled', () => {
     console.log('🌾 [PWA] App installed successfully');
     hideInstallBanner();
-    hideIosModal();
+    hideHelpfulModal();
     deferredPrompt = null;
+    window._deferredPwaPrompt = null;
     const installedMsg = isAdmin
       ? 'مبارک ہو! ایڈمن کنٹرول پینل ایپ آپ کی ہوم اسکرین پر شامل ہو چکی ہے۔'
       : 'مبارک ہو! ہارون زرعی مرکز ایپ آپ کی ہوم اسکرین پر شامل ہو چکی ہے۔';
     showCelebrationToast(installedMsg);
+    // Hide buttons once installed
+    document.querySelectorAll('.pwa-install-trigger').forEach((btn) => btn.classList.add('hidden'));
   });
 
-  // 6. DETECT IOS SAFARI (iPhone/iPad)
-  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) &&
-    !window.MSStream &&
-    !isStandalone;
+  // 6. DETECT PLATFORM
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) && !window.MSStream;
+  const isAndroid = /android/.test(window.navigator.userAgent.toLowerCase());
 
-  if (isIos) {
+  if (isIos && !isStandalone) {
     const isDismissed = sessionStorage.getItem(PWA_DISMISS_KEY);
     if (!isDismissed) {
       setTimeout(showIosBanner, 3000);
@@ -114,7 +142,7 @@
 
   // 7. CREATE & SHOW CUSTOM MODERN INSTALL BANNER (ANDROID / DESKTOP)
   function showInstallBanner() {
-    if (document.getElementById('pwa-install-banner')) return;
+    if (document.getElementById('pwa-install-banner') || isStandalone) return;
 
     const banner = document.createElement('div');
     banner.id = 'pwa-install-banner';
@@ -164,13 +192,11 @@
 
     document.body.appendChild(banner);
 
-    // Fade-in animation
     requestAnimationFrame(() => {
       banner.classList.remove('translate-y-8', 'opacity-0');
       banner.classList.add('translate-y-0', 'opacity-100');
     });
 
-    // Event Listeners
     document.getElementById('pwa-confirm-install-btn')?.addEventListener('click', triggerInstallPrompt);
     document.getElementById('pwa-dismiss-btn')?.addEventListener('click', dismissInstallBanner);
     document.getElementById('pwa-later-btn')?.addEventListener('click', dismissInstallBanner);
@@ -189,9 +215,107 @@
     sessionStorage.setItem(PWA_DISMISS_KEY, 'true');
   }
 
-  // 8. SHOW IOS SAFARI INSTALL GUIDE BANNER
+  // 8. INTERACTIVE STEP-BY-STEP INSTALL GUIDE MODAL (FOR ALL DEVICES)
+  function showHelpfulInstallGuideModal() {
+    let modal = document.getElementById('pwa-helpful-install-modal');
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'pwa-helpful-install-modal';
+    modal.dir = 'rtl';
+    modal.className =
+      'fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 font-sans';
+
+    const targetAppName = isAdmin ? 'ہارون زرعی مرکز (ایڈمن کنٹرول پورٹل)' : 'ہارون زرعی مرکز (کسان پورٹل)';
+
+    let platformStepsHtml = '';
+
+    if (isIos) {
+      platformStepsHtml = `
+        <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 space-y-3 text-right">
+          <div class="flex items-center gap-2 font-black text-amber-900 text-sm">
+            <i class="fa-brands fa-apple text-xl text-amber-600"></i>
+            <span>آئی فون (Safari Browser) پر انسٹال کرنے کا طریقہ:</span>
+          </div>
+          <ol class="space-y-2.5 text-xs text-gray-800 leading-relaxed list-decimal list-inside pr-1 font-bold">
+            <li>نیچے سفاری بار پر موجود <strong>شیئر بٹن</strong> (<i class="fa-solid fa-arrow-up-from-bracket text-blue-600 text-sm mx-1"></i>) دبائیں۔</li>
+            <li>تھوڑا نیچے اسکرول کر کے <strong>"Add to Home Screen"</strong> (<i class="fa-regular fa-square-plus text-emerald-600 text-sm mx-1"></i>) منتخب کریں۔</li>
+            <li>اوپر دائیں کونے میں <strong>"Add"</strong> پر کلک کریں۔ ایڈمن ایپ آپ کی ہوم اسکرین پر آ جائے گی!</li>
+          </ol>
+        </div>
+      `;
+    } else if (isAndroid) {
+      platformStepsHtml = `
+        <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 space-y-3 text-right">
+          <div class="flex items-center gap-2 font-black text-emerald-900 text-sm">
+            <i class="fa-brands fa-android text-xl text-emerald-600"></i>
+            <span>اینڈرائیڈ موبائل (Google Chrome) پر انسٹال کرنے کا طریقہ:</span>
+          </div>
+          <ol class="space-y-2.5 text-xs text-gray-800 leading-relaxed list-decimal list-inside pr-1 font-bold">
+            <li>کروم براؤزر کے اوپر دائیں کونے میں <strong>3 ڈاٹس</strong> (<strong class="text-base text-gray-900 font-mono">⋮</strong>) پر کلک کریں۔</li>
+            <li>مینو میں سے <strong>"Install app" (ایپ انسٹال کریں)</strong> یا <strong>"Add to Home screen"</strong> دبائیں۔</li>
+            <li>پاپ اپ پر <strong>"Install"</strong> منتخب کریں! ایپ خودکار آپ کے موبائل میں انسٹال ہو جائے گی۔</li>
+          </ol>
+        </div>
+      `;
+    } else {
+      // Desktop / PC (Chrome, Edge, Brave, etc.)
+      platformStepsHtml = `
+        <div class="bg-blue-50 border-2 border-blue-300 rounded-2xl p-4 space-y-3 text-right">
+          <div class="flex items-center gap-2 font-black text-blue-900 text-sm">
+            <i class="fa-solid fa-laptop text-xl text-blue-600"></i>
+            <span>کمپیوٹر یا لیپ ٹاپ (Chrome / Edge) پر انسٹال کرنے کا طریقہ:</span>
+          </div>
+          <ol class="space-y-2.5 text-xs text-gray-800 leading-relaxed list-decimal list-inside pr-1 font-bold">
+            <li>اوپر براؤزر کی ایڈریس بار (URL بار) میں دائیں طرف موجود <strong>انسٹال آئیکن 🖥️ یا ⬇️</strong> پر کلک کریں۔</li>
+            <li>یا براؤزر کے اوپر دائیں کونے میں <strong>3 ڈاٹس (⋮)</strong> پر کلک کریں اور <strong>"Save and share" -> "Install ${isAdmin ? 'ایڈمن پینل' : 'ہارون زرعی مرکز'}"</strong> دبائیں۔</li>
+            <li>پاپ اپ پر <strong>"Install"</strong> پر کلک کریں۔ ایپ بغیر براؤزر کے الگ ونڈو میں کھل جائے گی!</li>
+          </ol>
+        </div>
+      `;
+    }
+
+    modal.innerHTML = `
+      <div class="bg-white rounded-3xl shadow-2xl border-2 ${isAdmin ? 'border-amber-400' : 'border-emerald-400'} max-w-md w-full p-5 sm:p-6 text-center space-y-4">
+        
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <img src="/icons/icon-192.png" alt="Logo" class="w-11 h-11 rounded-2xl shadow-xs border border-amber-300 shrink-0">
+            <div class="text-right">
+              <h3 class="font-black text-gray-900 text-sm sm:text-base font-urdu leading-tight">${targetAppName}</h3>
+              <p class="text-[11px] text-gray-500 font-bold">ایپ انسٹال کرنے کی آسان گائیڈ</p>
+            </div>
+          </div>
+          <button type="button" id="btn-close-helpful-guide" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        ${platformStepsHtml}
+
+        <div class="pt-1">
+          <button type="button" id="btn-confirm-helpful-guide" class="w-full ${isAdmin ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-gray-950 font-black' : 'bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold'} py-3 px-4 rounded-xl text-xs sm:text-sm shadow-md transition cursor-pointer">
+            سمجھ آ گیا (بند کریں)
+          </button>
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btn-close-helpful-guide')?.addEventListener('click', hideHelpfulModal);
+    document.getElementById('btn-confirm-helpful-guide')?.addEventListener('click', hideHelpfulModal);
+  }
+
+  function hideHelpfulModal() {
+    const modal = document.getElementById('pwa-helpful-install-modal');
+    if (modal) modal.remove();
+  }
+
+  // 9. SHOW IOS SAFARI INSTALL GUIDE BANNER (BOTTOM POPUP)
   function showIosBanner() {
-    if (document.getElementById('pwa-ios-banner')) return;
+    if (document.getElementById('pwa-ios-banner') || isStandalone) return;
 
     const banner = document.createElement('div');
     banner.id = 'pwa-ios-banner';
@@ -243,23 +367,7 @@
     });
   }
 
-  function hideIosModal() {
-    const banner = document.getElementById('pwa-ios-banner');
-    if (banner) banner.remove();
-  }
-
-  function showIosOrManualModal() {
-    if (isIos) {
-      showIosBanner();
-    } else {
-      const manualMsg = isAdmin
-        ? 'ایڈمن ایپ انسٹال کرنے کے لیے براؤزر کے مینو (3 ڈاٹس) میں "Install App" یا "Add to Home Screen" منتخب کریں۔'
-        : 'ایپ انسٹال کرنے کے لیے براؤزر کے مینو (3 ڈاٹس) میں "Install App" یا "Add to Home Screen" منتخب کریں۔';
-      showCelebrationToast(manualMsg);
-    }
-  }
-
-  // 9. CELEBRATION / NOTIFICATION TOAST
+  // 10. CELEBRATION / NOTIFICATION TOAST
   function showCelebrationToast(msg) {
     const toast = document.createElement('div');
     toast.dir = 'rtl';
@@ -277,7 +385,7 @@
     }, 4500);
   }
 
-  // 10. OFFLINE / ONLINE STATUS ALERTS
+  // 11. OFFLINE / ONLINE STATUS ALERTS
   window.addEventListener('offline', () => {
     let offlineBar = document.getElementById('pwa-offline-bar');
     if (!offlineBar) {
@@ -307,6 +415,4 @@
     }
   });
 
-  // Expose global trigger for any button with onclick="window.triggerPwaInstall()"
-  window.triggerPwaInstall = triggerInstallPrompt;
 })();

@@ -1,9 +1,10 @@
 {
+  "id": "/admin-pwa",
   "name": "ہارون زرعی مرکز - ایڈمن کنٹرول پینل",
   "short_name": "ایڈمن پینل",
   "description": "ہارون زرعی مرکز: بااختیار ایڈمن کنٹرول پورٹل، کسان کھاتہ بک انتظام، منڈی ریٹس اور مکمل حساب کتاب",
-  "start_url": "/admin?source=pwa_admin",
-  "scope": "/admin",
+  "start_url": "/admin",
+  "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#14532d",
@@ -16,7 +17,7 @@
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-192-maskable.png",
@@ -28,7 +29,7 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512-maskable.png",
