@@ -155,7 +155,16 @@ async function loadSettings() {
       const heroAddr = document.getElementById('hero-address-text');
       if (heroAddr) heroAddr.innerText = address;
       const heroName = document.getElementById('hero-business-name');
-      if (heroName && globalSettings.businessName) heroName.innerText = globalSettings.businessName;
+      if (heroName) {
+        const curLang = localStorage.getItem('hzm_lang') || 'ur';
+        if (curLang === 'en') {
+          heroName.innerText = (globalSettings && globalSettings.businessNameEn) || 'HAROON ZARAI MARKAZ';
+          heroName.classList.remove('font-urdu');
+        } else {
+          heroName.innerText = (globalSettings && globalSettings.businessName && !/[a-zA-Z]/.test(globalSettings.businessName)) ? globalSettings.businessName : 'ہارون زرعی مرکز';
+          heroName.classList.add('font-urdu');
+        }
+      }
       const heroTagline = document.getElementById('hero-tagline-text');
       if (heroTagline && globalSettings.tagline) heroTagline.innerText = globalSettings.tagline;
 
