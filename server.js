@@ -66,10 +66,133 @@ const MIME_TYPES = {
   '.ttf': 'font/ttf'
 };
 
-// Simple active admin sessions token storage
-const adminSessions = new Set(['admin-super-token-hzm']);
+// --- Security & Session Management ---
+// Active admin sessions store: token -> { createdAt, lastActiveAt, ip }
+// Idle timeout: 4 hours, Absolute expiration: 24 hours
+const adminSessions = new Map();
+const SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;  // 4 hours
+const SESSION_MAX_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function createAdminSession(ip = '') {
+  const token = 'hzm_' + crypto.randomBytes(24).toString('hex');
+  const now = Date.now();
+  adminSessions.set(token, {
+    createdAt: now,
+    lastActiveAt: now,
+    ip: ip || 'unknown'
+  });
+  return token;
+}
+
+function isValidAdminSession(token) {
+  if (!token || typeof token !== 'string') return false;
+  const session = adminSessions.get(token);
+  if (!session) return false;
+
+  const now = Date.now();
+  // Check maximum lifetime (24h)
+  if (now - session.createdAt > SESSION_MAX_LIFETIME_MS) {
+    adminSessions.delete(token);
+    return false;
+  }
+  // Check idle timeout (4h)
+  if (now - session.lastActiveAt > SESSION_IDLE_TIMEOUT_MS) {
+    adminSessions.delete(token);
+    return false;
+  }
+
+  // Refresh activity timestamp
+  session.lastActiveAt = now;
+  return true;
+}
+
+function revokeAdminSession(token) {
+  if (token && adminSessions.has(token)) {
+    adminSessions.delete(token);
+    return true;
+  }
+  return false;
+}
+
+// IP Rate Limiter for Login Endpoints (Admin & Farmer)
+const loginAttempts = new Map(); // ip/key -> { failedCount, firstAttemptAt, blockedUntil }
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    const parts = String(forwarded).split(',');
+    if (parts.length > 0 && parts[0].trim()) {
+      return parts[0].trim();
+    }
+  }
+  return req.socket.remoteAddress || '127.0.0.1';
+}
+
+function isRateLimited(key, maxAttempts = 5, windowMs = 15 * 60 * 1000, blockDurationMs = 15 * 60 * 1000) {
+  const now = Date.now();
+  const record = loginAttempts.get(key);
+  if (!record) return { limited: false, remaining: maxAttempts };
+
+  // If currently blocked
+  if (record.blockedUntil && now < record.blockedUntil) {
+    const retrySec = Math.ceil((record.blockedUntil - now) / 1000);
+    return { limited: true, retryAfterSec: retrySec };
+  }
+
+  // If window expired, reset
+  if (now - record.firstAttemptAt > windowMs) {
+    loginAttempts.delete(key);
+    return { limited: false, remaining: maxAttempts };
+  }
+
+  if (record.failedCount >= maxAttempts) {
+    record.blockedUntil = now + blockDurationMs;
+    const retrySec = Math.ceil(blockDurationMs / 1000);
+    return { limited: true, retryAfterSec: retrySec };
+  }
+
+  return { limited: false, remaining: maxAttempts - record.failedCount };
+}
+
+function recordFailedLogin(key, maxAttempts = 5, blockDurationMs = 15 * 60 * 1000) {
+  const now = Date.now();
+  let record = loginAttempts.get(key);
+  if (!record || (record.blockedUntil && now > record.blockedUntil)) {
+    record = { failedCount: 1, firstAttemptAt: now, blockedUntil: 0 };
+  } else {
+    record.failedCount += 1;
+  }
+
+  if (record.failedCount >= maxAttempts) {
+    record.blockedUntil = now + blockDurationMs;
+  }
+  loginAttempts.set(key, record);
+}
+
+function clearFailedLogins(key) {
+  loginAttempts.delete(key);
+}
+
+// Constant-time string comparison to prevent timing side-channel attacks
+function timingSafeEqualStr(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const hashA = crypto.createHash('sha256').update(Buffer.from(a, 'utf8')).digest();
+  const hashB = crypto.createHash('sha256').update(Buffer.from(b, 'utf8')).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
+// Enterprise HTTP Security Headers (OWASP Top 10 Defenses)
+function applySecurityHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(self), microphone=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+}
+
 const initSettings = (typeof localDb.getSettings === 'function') ? localDb.getSettings() : {};
-let cachedAdminUsername = String(initSettings.adminUsername || process.env.ADMIN_USERNAME || 'admin').trim();
+let cachedAdminUsername = String(initSettings.adminUsername || process.env.ADMIN_USERNAME || 'HaroonZaraiMarkaz').trim();
 let cachedAdminPassword = String(initSettings.adminPassword || process.env.ADMIN_PASSWORD || '5711Noman').trim();
 
 // Initialize cached Admin Username and Password from active database (Supabase or local)
@@ -104,6 +227,7 @@ function parseJsonBody(req) {
 
 // Send JSON response
 function sendJson(res, statusCode, data) {
+  applySecurityHeaders(res);
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
@@ -113,14 +237,12 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
-// Check admin authorization
+// Check admin authorization: strictly requires valid, active, unexpired session token
 function checkAdminAuth(req) {
   const token = req.headers['x-admin-token'] || req.headers['authorization'];
   if (!token) return false;
-  const cleanToken = token.replace('Bearer ', '').trim();
-  if (adminSessions.has(cleanToken)) return true;
-  if (cachedAdminPassword && cleanToken === cachedAdminPassword) return true;
-  return false;
+  const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
+  return isValidAdminSession(cleanToken);
 }
 
 // Phone number normalization & duplicate detection helper
@@ -166,6 +288,7 @@ function serveStatic(req, res, parsedUrl) {
   }
 
   fs.readFile(filePath, (err, content) => {
+    applySecurityHeaders(res);
     if (err) {
       if (err.code === 'ENOENT') {
         // SPA fallback only for HTML page routes (never for assets or uploads)
@@ -273,8 +396,18 @@ const server = http.createServer(async (req, res) => {
   // API Routes
   if (pathname.startsWith('/api/')) {
     try {
-      // 1. Admin Login (STRICT: Created Username & Password ONLY)
+      // 1. Admin Login (STRICT: Created Username & Password ONLY with Brute-Force Defense)
       if (pathname === '/api/admin/login' && method === 'POST') {
+        const clientIp = getClientIp(req);
+        const rateCheck = isRateLimited('admin_' + clientIp, 5, 15 * 60 * 1000, 15 * 60 * 1000);
+        if (rateCheck.limited) {
+          return sendJson(res, 429, {
+            success: false,
+            message: `سیکیورٹی وارننگ: لگاتار غلط کوششوں کی بنا پر لاگ ان 15 منٹ کے لیے بند کر دیا گیا ہے۔ برائے مہربانی ${rateCheck.retryAfterSec} سیکنڈ بعد دوبارہ کوشش کریں۔`,
+            retryAfter: rateCheck.retryAfterSec
+          });
+        }
+
         const body = await parseJsonBody(req);
         let settings;
         try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
@@ -289,13 +422,13 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 400, { success: false, message: "براہ کرم یوزر نیم اور پاس ورڈ دونوں درج کریں!" });
         }
 
-        // STRICT: Only the exact username and password created in admin settings
-        const usernameMatches = (inputUsername.toLowerCase() === validUsername.toLowerCase());
-        const passwordMatches = (inputPass === validPass);
+        // Constant-time string comparison (timing-attack immune)
+        const usernameMatches = timingSafeEqualStr(inputUsername.toLowerCase(), validUsername.toLowerCase());
+        const passwordMatches = timingSafeEqualStr(inputPass, validPass);
 
         if (usernameMatches && passwordMatches) {
-          const token = 'hzm_' + crypto.randomBytes(16).toString('hex');
-          adminSessions.add(token);
+          clearFailedLogins('admin_' + clientIp);
+          const token = createAdminSession(clientIp);
           return sendJson(res, 200, {
             success: true,
             token,
@@ -305,50 +438,21 @@ const server = http.createServer(async (req, res) => {
           });
         }
 
+        recordFailedLogin('admin_' + clientIp, 5, 15 * 60 * 1000);
+        const remaining = 5 - ((loginAttempts.get('admin_' + clientIp)?.failedCount) || 1);
         return sendJson(res, 401, {
           success: false,
-          message: "غلط ایڈمن یوزر نیم یا پاس ورڈ! صرف آپ کے تخلیق کردہ یوزر نیم اور پاس ورڈ سے لاگ ان ممکن ہے۔"
+          message: remaining > 0
+            ? `غلط ایڈمن یوزر نیم یا پاس ورڈ! (باقی کوششیں: ${remaining})`
+            : `سیکیورٹی لاک: 5 ناکام کوششوں کے بعد لاگ ان 15 منٹ کے لیے بند ہو گیا۔`
         });
       }
 
-      // 1.1 Face Verification via Live Camera
-      if (pathname === '/api/admin/face-verify' && method === 'POST') {
-        const body = await parseJsonBody(req);
-        let settings;
-        try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
-
-        if (body.image || body.faceDetected || body.verified) {
-          const token = 'hzm_' + crypto.randomBytes(16).toString('hex');
-          adminSessions.add(token);
-          return sendJson(res, 200, {
-            success: true,
-            token,
-            method: 'Camera Face Scan',
-            message: "چہرے کی لائیو تصدیق مکمل! خوش آمدید میاں ہارون رشید صاحب۔",
-            adminName: settings.ownerName || 'میاں ہارون رشید'
-          });
-        }
-        return sendJson(res, 400, { success: false, message: "چہرے کی تصدیق نہیں ہو سکی۔ براہ کرم لائٹ میں اپنا چہرہ سیدھا رکھیں۔" });
-      }
-
-      // 1.2 Device Home Screen Lock (Windows Hello / Fingerprint / Face ID via WebAuthn)
-      if (pathname === '/api/admin/webauthn-verify' && method === 'POST') {
-        const body = await parseJsonBody(req);
-        let settings;
-        try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
-
-        if (body.verified || body.id || body.credentialId) {
-          const token = 'hzm_' + crypto.randomBytes(16).toString('hex');
-          adminSessions.add(token);
-          return sendJson(res, 200, {
-            success: true,
-            token,
-            method: 'Device Screen Lock',
-            message: "ڈیوائس اسکرین لاک کی تصدیق کامیاب! ایڈمن پورٹل انلاک ہو گیا۔",
-            adminName: settings.ownerName || 'میاں ہارون رشید'
-          });
-        }
-        return sendJson(res, 400, { success: false, message: "ڈیوائس لاک کی تصدیق ناکام رہی۔" });
+      // 1.1 Admin Logout (Revoke session token immediately on server)
+      if (pathname === '/api/admin/logout' && method === 'POST') {
+        const token = (req.headers['x-admin-token'] || req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim();
+        revokeAdminSession(token);
+        return sendJson(res, 200, { success: true, message: 'ایڈمن کامیابی سے لاگ آؤٹ ہو گیا۔' });
       }
 
       // 2. Settings
@@ -402,12 +506,11 @@ const server = http.createServer(async (req, res) => {
             }
           } catch (e) {}
 
-          // If password or PIN changed, invalidate all older sessions and issue a fresh token for current session
+          // If password or username changed, invalidate all older sessions and issue a fresh token for current session
           let newToken = null;
           if (passwordChanged) {
             adminSessions.clear();
-            newToken = 'hzm_' + crypto.randomBytes(16).toString('hex');
-            adminSessions.add(newToken);
+            newToken = createAdminSession(getClientIp(req));
           }
 
           console.log('✅ Settings updated. Phone:', body.phone, '| Password changed:', passwordChanged);
@@ -419,12 +522,35 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      // 2.5 Image Upload Endpoint (Photo Upload from Device/Camera for Products)
+      // 2.5 Image Upload Endpoint (Strict MIME, Magic Bytes & Size Validation)
       if (pathname === '/api/upload' && method === 'POST') {
-        if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'Unauthorized' });
+        if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'غیر مجاز رسائی (Unauthorized)' });
         const body = await parseJsonBody(req);
-        if (!body.image) {
-          return sendJson(res, 400, { error: 'No image data provided' });
+        if (!body.image || typeof body.image !== 'string') {
+          return sendJson(res, 400, { error: 'تصویر کا ڈیٹا موجود نہیں ہے۔' });
+        }
+
+        const match = body.image.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i);
+        if (!match) {
+          return sendJson(res, 400, { error: 'صرف تصاویر (JPG, PNG, WebP) اپلوڈ کرنے کی اجازت ہے۔' });
+        }
+
+        const rawFormat = match[1].toLowerCase();
+        const ext = (rawFormat === 'jpeg' || rawFormat === 'jpg') ? 'jpg' : rawFormat;
+        const base64Data = match[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        if (buffer.length > 10 * 1024 * 1024) {
+          return sendJson(res, 400, { error: 'تصویر کا سائز 10MB سے زیادہ نہیں ہو سکتا۔' });
+        }
+
+        // Deep Magic Bytes Inspection to block malicious masqueraded payloads
+        const isPng = buffer.length > 8 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+        const isJpg = buffer.length > 3 && buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+        const isWebp = buffer.length > 12 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP';
+
+        if (!isPng && !isJpg && !isWebp) {
+          return sendJson(res, 400, { error: 'فائل کا فارمیٹ ناقص ہے، صرف حقیقی تصاویر قابل قبول ہیں۔' });
         }
 
         try {
@@ -433,21 +559,12 @@ const server = http.createServer(async (req, res) => {
             fs.mkdirSync(uploadsDir, { recursive: true });
           }
 
-          let ext = 'jpg';
-          let base64Data = body.image;
-          const match = body.image.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
-          if (match) {
-            ext = match[1] === 'jpeg' ? 'jpg' : match[1];
-            base64Data = match[2];
-          }
-
-          const filename = `proof_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
+          const filename = `proof_${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${ext}`;
           const filePath = path.join(uploadsDir, filename);
-          const buffer = Buffer.from(base64Data, 'base64');
           fs.writeFileSync(filePath, buffer);
 
           // Persist to Cloud Database (Supabase) and localDb
-          const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+          const mimeType = ext === 'png' ? 'image/png' : (ext === 'webp' ? 'image/webp' : 'image/jpeg');
           try {
             if (typeof db.saveUploadedFile === 'function') {
               await db.saveUploadedFile(filename, mimeType, base64Data);
@@ -461,19 +578,14 @@ const server = http.createServer(async (req, res) => {
             }
           } catch (e) {}
 
-          console.log(`📸 Image saved: /uploads/${filename} (${buffer.length} bytes) to disk & cloud DB`);
+          console.log(`📸 Image verified & saved: /uploads/${filename} (${buffer.length} bytes) to disk & cloud DB`);
           return sendJson(res, 200, {
             success: true,
             url: `/uploads/${filename}`
           });
         } catch (uploadErr) {
           console.error('File upload save error:', uploadErr);
-          // Return base64 as fallback so photo is never lost
-          return sendJson(res, 200, {
-            success: true,
-            url: body.image,
-            note: 'Stored as Data URI'
-          });
+          return sendJson(res, 500, { error: 'سرور پر تصویر محفوظ کرنے میں خرابی پیش آگئی۔' });
         }
       }
 
@@ -590,6 +702,14 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (pathname === '/api/farmer/login' && method === 'POST') {
+        const clientIp = getClientIp(req);
+        const rateCheck = isRateLimited('farmer_' + clientIp, 10, 15 * 60 * 1000, 15 * 60 * 1000);
+        if (rateCheck.limited) {
+          return sendJson(res, 429, { 
+            error: `سیکیورٹی الرٹ: لگاتار غلط کوششوں کی وجہ سے لاگ ان 15 منٹ کے لیے بند ہے۔ ${rateCheck.retryAfterSec} سیکنڈ بعد دوبارہ کوشش کریں۔` 
+          });
+        }
+
         const body = await parseJsonBody(req);
         let resData;
         try {
@@ -599,8 +719,10 @@ const server = http.createServer(async (req, res) => {
           resData = localDb.farmerLogin(body.identifier, body.password);
         }
         if (resData.error) {
+          recordFailedLogin('farmer_' + clientIp, 10, 15 * 60 * 1000);
           return sendJson(res, 401, resData);
         }
+        clearFailedLogins('farmer_' + clientIp);
         try {
           if (db !== localDb) localDb.farmerLogin(body.identifier, body.password);
         } catch (e) {}
@@ -858,6 +980,13 @@ const server = http.createServer(async (req, res) => {
         const farmerId = farmerTxMatch[1];
         if (method === 'POST') {
           const body = await parseJsonBody(req);
+          const numAmount = Number(body.amount);
+          if (isNaN(numAmount) || !isFinite(numAmount) || numAmount < 0) {
+            return sendJson(res, 400, { error: 'براہ کرم درست اور مثبت رقم درج کریں۔' });
+          }
+          if (body.type && body.type !== 'debit' && body.type !== 'credit') {
+            return sendJson(res, 400, { error: 'لین دین کی قسم (بنام یا جمع) درست نہیں ہے۔' });
+          }
           let result;
           try {
             result = await db.addTransaction(farmerId, body);
@@ -892,6 +1021,15 @@ const server = http.createServer(async (req, res) => {
         }
         if (method === 'PUT') {
           const body = await parseJsonBody(req);
+          if (body.amount !== undefined) {
+            const numAmount = Number(body.amount);
+            if (isNaN(numAmount) || !isFinite(numAmount) || numAmount < 0) {
+              return sendJson(res, 400, { error: 'براہ کرم درست اور مثبت رقم درج کریں۔' });
+            }
+          }
+          if (body.type && body.type !== 'debit' && body.type !== 'credit') {
+            return sendJson(res, 400, { error: 'لین دین کی قسم (بنام یا جمع) درست نہیں ہے۔' });
+          }
           let updated;
           try {
             updated = await db.updateTransaction(farmerId, txId, body);
@@ -1205,6 +1343,7 @@ const server = http.createServer(async (req, res) => {
 
       const bookingDeleteMatch = pathname.match(/^\/api\/bookings\/([^\/]+)$/);
       if (bookingDeleteMatch && method === 'DELETE') {
+        if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'Unauthorized' });
         const bkId = bookingDeleteMatch[1];
         await db.deleteBooking(bkId);
         try { if (db !== localDb) localDb.deleteBooking(bkId); } catch (e) {}
@@ -1235,6 +1374,7 @@ const server = http.createServer(async (req, res) => {
 
       // --- 15. Suppliers & Company Purchases API ---
       if (pathname === '/api/suppliers' && method === 'GET') {
+        if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'Unauthorized' });
         const sups = await db.getSuppliers();
         return sendJson(res, 200, sups);
       }
@@ -1306,4 +1446,19 @@ server.listen(PORT, '0.0.0.0', () => {
       if (typeof localDb.cleanOldFarmerLogins === 'function') localDb.cleanOldFarmerLogins();
     } catch (e) {}
   }, 60 * 60 * 1000);
+
+  // Periodically purge expired admin sessions and stale rate limiter entries (every 15 minutes)
+  setInterval(() => {
+    const now = Date.now();
+    for (const [token, s] of adminSessions.entries()) {
+      if (now - s.createdAt > SESSION_MAX_LIFETIME_MS || now - s.lastActiveAt > SESSION_IDLE_TIMEOUT_MS) {
+        adminSessions.delete(token);
+      }
+    }
+    for (const [key, rec] of loginAttempts.entries()) {
+      if ((rec.blockedUntil && now > rec.blockedUntil) || (!rec.blockedUntil && now - rec.firstAttemptAt > 30 * 60 * 1000)) {
+        loginAttempts.delete(key);
+      }
+    }
+  }, 15 * 60 * 1000);
 });

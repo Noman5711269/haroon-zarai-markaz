@@ -142,8 +142,11 @@ if (adminLoginForm) {
   });
 }
 
-function adminLogout() {
+async function adminLogout() {
   if (confirm('کیا آپ ایڈمن پورٹل سے لاگ آؤٹ کرنا چاہتے ہیں؟')) {
+    try {
+      await adminFetch('/api/admin/logout', { method: 'POST' });
+    } catch (e) {}
     sessionStorage.removeItem('adminToken');
     window.location.reload();
   }
@@ -3484,7 +3487,7 @@ async function deleteComplaint(id) {
 setInterval(() => {
   const overviewSection = document.getElementById('tab-overview');
   if (overviewSection && !overviewSection.classList.contains('hidden')) {
-    const adminToken = sessionStorage.getItem('hzm_admin_token') || localStorage.getItem('hzm_admin_token');
+    const adminToken = sessionStorage.getItem('adminToken');
     if (adminToken) {
       loadAdminStats();
       loadFarmerLogins();
