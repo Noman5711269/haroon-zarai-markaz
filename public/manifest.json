@@ -1,5 +1,5 @@
 {
-  "id": "/customer-pwa",
+  "id": "/customer-pwa-v2",
   "name": "ہارون زرعی مرکز - ڈیجیٹل کھاتہ و کسان پورٹل",
   "short_name": "ہارون زرعی مرکز",
   "description": "ہارون زرعی مرکز: کسان ڈیجیٹل کھاتہ بک، غلہ منڈی ریٹس اور زرعی ادویات و کھاد گائیڈ",
@@ -7,49 +7,49 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#064e3b",
-  "background_color": "#064e3b",
+  "theme_color": "#001601",
+  "background_color": "#001601",
   "lang": "ur",
   "dir": "rtl",
   "categories": ["business", "finance", "productivity"],
   "icons": [
     {
-      "src": "/images/hzm-logo.jpg",
+      "src": "/icons/icon-512-maskable.png?v=3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png?v=3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png?v=3",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-192.png?v=3",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/hzm-logo.jpg?v=3",
       "sizes": "1024x1024",
       "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/apple-touch-icon.png",
+      "src": "/icons/apple-touch-icon.png?v=3",
       "sizes": "180x180",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon.svg",
+      "src": "/icons/icon.svg?v=3",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -61,21 +61,21 @@
       "short_name": "کھاتہ لاگ ان",
       "url": "/#farmer-login",
       "description": "کسان کا ڈیجیٹل کھاتہ لاگ ان",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     },
     {
       "name": "غلہ منڈی کے ریٹ",
       "short_name": "منڈی ریٹس",
       "url": "/mandi",
       "description": "گندم، دھان اور روزانہ کے تازہ ترین ریٹس",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     },
     {
       "name": "زرعی ادویات و کھاد",
       "short_name": "زرعی ادویات",
       "url": "/adviyaat",
       "description": "اسپرے، زہریں اور کھادیں تفصیلات",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192.png?v=3", "sizes": "192x192" }]
     }
   ],
   "prefer_related_applications": false
