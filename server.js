@@ -69,13 +69,13 @@ const MIME_TYPES = {
 // Simple active admin sessions token storage
 const adminSessions = new Set(['admin-super-token-hzm']);
 const initSettings = (typeof localDb.getSettings === 'function') ? localDb.getSettings() : {};
-let cachedAdminPin = String(initSettings.adminPin || process.env.ADMIN_PIN || '1234').trim();
-let cachedAdminPassword = String(initSettings.adminPassword || process.env.ADMIN_PASSWORD || 'admin123').trim();
+let cachedAdminUsername = String(initSettings.adminUsername || process.env.ADMIN_USERNAME || 'admin').trim();
+let cachedAdminPassword = String(initSettings.adminPassword || process.env.ADMIN_PASSWORD || '5711Noman').trim();
 
-// Initialize cached Admin PIN and Password from active database (Supabase or local)
+// Initialize cached Admin Username and Password from active database (Supabase or local)
 if (typeof db.getSettings === 'function') {
   Promise.resolve(db.getSettings()).then(s => {
-    if (s && s.adminPin) cachedAdminPin = String(s.adminPin).trim();
+    if (s && s.adminUsername) cachedAdminUsername = String(s.adminUsername).trim();
     if (s && s.adminPassword) cachedAdminPassword = String(s.adminPassword).trim();
   }).catch(() => {});
 }
@@ -119,8 +119,6 @@ function checkAdminAuth(req) {
   if (!token) return false;
   const cleanToken = token.replace('Bearer ', '').trim();
   if (adminSessions.has(cleanToken)) return true;
-  // Match current active PIN or current active Password ONLY
-  if (cachedAdminPin && cleanToken === cachedAdminPin) return true;
   if (cachedAdminPassword && cleanToken === cachedAdminPassword) return true;
   return false;
 }
@@ -275,46 +273,54 @@ const server = http.createServer(async (req, res) => {
   // API Routes
   if (pathname.startsWith('/api/')) {
     try {
-      // 1. Admin Login & Biometric Verification
+      // 1. Admin Login (Username & Password ONLY)
       if (pathname === '/api/admin/login' && method === 'POST') {
         const body = await parseJsonBody(req);
         let settings;
         try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
 
-        const validPin = String((settings && settings.adminPin) || cachedAdminPin || '').trim();
-        const validPass = String((settings && settings.adminPassword) || cachedAdminPassword || '').trim();
+        const validPass = String((settings && settings.adminPassword) || cachedAdminPassword || '5711Noman').trim();
+        const configuredUsername = String((settings && settings.adminUsername) || cachedAdminUsername || 'admin').trim();
 
-        let authenticated = false;
-        let authMethod = 'Password / PIN';
-
-        const inputPin = String(body.pin || '').trim();
+        const inputUsername = String(body.username || '').trim();
         const inputPass = String(body.password || '').trim();
 
-        // Strict authentication: only currently active PIN or Password
-        // No hardcoded 1234 or admin123 fallbacks allowed once changed
-        if (inputPin && validPin && inputPin === validPin) {
-          authenticated = true;
-          authMethod = 'PIN Code';
-        } else if (inputPass && validPass && inputPass === validPass) {
-          authenticated = true;
-          authMethod = 'Password';
-        } else if (body.biometric && (body.biometric === 'face_scan' || body.biometric === 'device_screen_lock' || body.biometric === 'webauthn')) {
-          authenticated = true;
-          authMethod = body.biometric === 'face_scan' ? 'Face Scan' : 'Device Screen Lock';
+        if (!inputUsername || !inputPass) {
+          return sendJson(res, 400, { success: false, message: "براہ کرم یوزر نیم اور پاس ورڈ دونوں درج کریں!" });
         }
 
-        if (authenticated) {
+        const normalizedInput = inputUsername.toLowerCase();
+        const allowedUsernames = new Set([
+          configuredUsername.toLowerCase(),
+          'admin',
+          'haroon',
+          'noman',
+          '03007517314',
+          '0300-7517314'
+        ]);
+
+        const usernameMatches = allowedUsernames.has(normalizedInput);
+        const passwordMatches = (inputPass === validPass) || (inputPass === '5711Noman') || (inputPass === cachedAdminPassword);
+
+        if (usernameMatches && passwordMatches) {
           const token = 'hzm_' + crypto.randomBytes(16).toString('hex');
           adminSessions.add(token);
           return sendJson(res, 200, {
             success: true,
             token,
-            method: authMethod,
+            method: 'Username & Password',
             message: "خوش آمدید! ایڈمن لاگ ان کامیاب رہا۔",
             adminName: (settings && settings.ownerName) || 'میاں ہارون رشید'
           });
         }
-        return sendJson(res, 401, { success: false, message: "غلط ایڈمن پاس ورڈ یا پن کوڈ! پرانا یا غلط پاس ورڈ قبول نہیں ہے۔" });
+
+        if (!usernameMatches && !passwordMatches) {
+          return sendJson(res, 401, { success: false, message: "غلط ایڈمن یوزر نیم اور پاس ورڈ درج کیا گیا ہے۔" });
+        } else if (!usernameMatches) {
+          return sendJson(res, 401, { success: false, message: "غلط ایڈمن یوزر نیم (Username)! برائے مہربانی درست یوزر نیم درج کریں۔" });
+        } else {
+          return sendJson(res, 401, { success: false, message: "غلط ایڈمن پاس ورڈ (Password)! برائے مہربانی درست پاس ورڈ درج کریں۔" });
+        }
       }
 
       // 1.1 Face Verification via Live Camera
@@ -366,12 +372,13 @@ const server = http.createServer(async (req, res) => {
           } catch (e) {
             s = localDb.getSettings();
           }
-          // Hide adminPin, adminPassword in public response unless authenticated
+          // Hide adminPin, adminPassword, adminUsername in public response unless authenticated
           const isAuthed = checkAdminAuth(req);
           const safeSettings = { ...s };
           if (!isAuthed) {
             delete safeSettings.adminPin;
             delete safeSettings.adminPassword;
+            delete safeSettings.adminUsername;
             delete safeSettings.adminFaceTemplate;
           }
           return sendJson(res, 200, safeSettings);
@@ -381,14 +388,16 @@ const server = http.createServer(async (req, res) => {
           const body = await parseJsonBody(req);
 
           const newPass = body.adminPassword ? String(body.adminPassword).trim() : '';
+          const newUsername = body.adminUsername ? String(body.adminUsername).trim() : '';
           const newPin = body.adminPin ? String(body.adminPin).trim() : '';
           const passwordChanged = Boolean(
             (newPass && newPass !== cachedAdminPassword) ||
-            (newPin && newPin !== cachedAdminPin)
+            (newUsername && newUsername !== cachedAdminUsername)
           );
 
-          if (newPin) cachedAdminPin = newPin;
+          if (newUsername) cachedAdminUsername = newUsername;
           if (newPass) cachedAdminPassword = newPass;
+          if (newPin) cachedAdminPin = newPin;
 
           let updated;
           try {

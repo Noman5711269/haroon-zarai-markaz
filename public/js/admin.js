@@ -61,119 +61,9 @@ function adminFetch(url, options = {}) {
   return fetch(url, options);
 }
 
-// --- Admin Authentication (Password, PIN & Device Screen Lock) ---
-// 1. Laptop / Phone Home Screen Lock (Windows Hello / Fingerprint / Face / PIN)
-async function loginWithDeviceLock() {
-  const btn = document.getElementById('btn-device-lock');
-  const errBox = document.getElementById('login-error');
-  if (errBox) errBox.classList.add('hidden');
+// --- Admin Authentication (Username & Password ONLY) ---
 
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-yellow-300"></i> <span>ونڈوز ہیلو / اسکرین لاک کی تصدیق کا انتظار ہے...</span>`;
-  }
-
-  try {
-    let credId = 'device_screen_' + Date.now();
-
-    if (window.PublicKeyCredential) {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      const userId = new Uint8Array(16);
-      window.crypto.getRandomValues(userId);
-
-      try {
-        const credential = await navigator.credentials.get({
-          publicKey: {
-            challenge: challenge,
-            timeout: 60000,
-            userVerification: 'required',
-            rpId: window.location.hostname
-          }
-        }).catch(async () => {
-          return await navigator.credentials.create({
-            publicKey: {
-              challenge: challenge,
-              rp: { name: "ہارون زرعی مرکز ایڈمن پورٹل", id: window.location.hostname },
-              user: {
-                id: userId,
-                name: "admin@haroonzarai.pk",
-                displayName: "ایڈمنسٹریٹر ہارون زرعی مرکز"
-              },
-              pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-              authenticatorSelection: {
-                authenticatorAttachment: "platform",
-                userVerification: "required"
-              },
-              timeout: 60000
-            }
-          });
-        });
-
-        if (credential) {
-          credId = credential.id || credId;
-        }
-      } catch (promptErr) {
-        console.warn('WebAuthn prompt dismissed or error:', promptErr);
-        if (promptErr.name === 'NotAllowedError' || promptErr.name === 'AbortError') {
-          if (errBox) {
-            errBox.classList.remove('hidden');
-            errBox.innerText = 'اسکرین لاک تصدیق منسوخ کر دی گئی۔ دوبارہ کلک کریں یا پاس ورڈ درج کریں۔';
-          }
-          return;
-        }
-      }
-    }
-
-    const res = await fetch('/api/admin/webauthn-verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ verified: true, credentialId: credId })
-    });
-    const data = await res.json();
-
-    if (res.ok && data.success) {
-      sessionStorage.setItem('adminToken', data.token);
-      if (data.adminName) {
-        const nameEl = document.getElementById('admin-welcome-name');
-        if (nameEl) nameEl.innerText = `${data.adminName} (ایڈمن)`;
-      }
-      checkAuthAndInit();
-    } else {
-      if (errBox) {
-        errBox.classList.remove('hidden');
-        errBox.innerText = data.message || 'اسکرین لاک تصدیق مکمل نہ ہو سکی۔';
-      }
-    }
-  } catch (err) {
-    console.warn('Device lock login error:', err);
-    try {
-      const fbRes = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ biometric: 'device_screen_lock' })
-      });
-      const fbData = await fbRes.json();
-      if (fbRes.ok && fbData.success) {
-        sessionStorage.setItem('adminToken', fbData.token);
-        checkAuthAndInit();
-        return;
-      }
-    } catch (e) {}
-
-    if (errBox) {
-      errBox.classList.remove('hidden');
-      errBox.innerText = 'آپ کے سسٹم کا اسکرین لاک تصدیق نہیں ہوا، برائے مہربانی پاس ورڈ یا پن کوڈ استعمال کریں۔';
-    }
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = `<i class="fa-solid fa-shield-heart text-base text-yellow-300"></i> <span>ڈیوائس اسکرین لاک سے لاگ ان کریں</span>`;
-    }
-  }
-}
-
-// 3. Password Visibility Toggle
+// Password Visibility Toggle
 function togglePassVisibility(inputId, iconId) {
   const input = document.getElementById(inputId);
   const icon = document.getElementById(iconId);
@@ -193,20 +83,20 @@ function togglePassVisibility(inputId, iconId) {
   }
 }
 
-// 4. Admin Password & PIN Form Submit
+// Admin Username & Password Form Submit
 const adminLoginForm = document.getElementById('admin-login-form');
 if (adminLoginForm) {
   adminLoginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const username = (document.getElementById('admin-username-input')?.value || '').trim();
     const password = (document.getElementById('admin-password-input')?.value || '').trim();
-    const pin = (document.getElementById('admin-pin-input')?.value || '').trim();
     const errBox = document.getElementById('login-error');
     const btn = document.getElementById('login-btn');
 
-    if (!password && !pin) {
+    if (!username || !password) {
       if (errBox) {
         errBox.classList.remove('hidden');
-        errBox.innerText = 'برائے مہربانی ایڈمن پاس ورڈ یا 4 ہندسوں کا پن کوڈ درج کریں۔';
+        errBox.innerText = 'برائے مہربانی ایڈمن یوزر نیم اور پاس ورڈ دونوں درج کریں۔';
       }
       return;
     }
@@ -221,7 +111,7 @@ if (adminLoginForm) {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, pin })
+        body: JSON.stringify({ username, password })
       });
       const data = await res.json();
 
@@ -235,18 +125,18 @@ if (adminLoginForm) {
       } else {
         if (errBox) {
           errBox.classList.remove('hidden');
-          errBox.innerText = data.message || 'غلط ایڈمن پاس ورڈ یا پن کوڈ!';
+          errBox.innerText = data.message || 'غلط ایڈمن یوزر نیم یا پاس ورڈ!';
         }
       }
     } catch (err) {
       if (errBox) {
         errBox.classList.remove('hidden');
-        errBox.innerText = 'سرور سے رابطہ نہ ہو سکا۔';
+        errBox.innerText = 'سرور سے رابطہ نہ ہو سکا۔ برائے مہربانی انٹرنیٹ چیک کریں۔';
       }
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-lock-open"></i> <span>پاس ورڈ سے لاگ ان کریں</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>ایڈمن لاگ ان کریں (Login)</span>`;
       }
     }
   });
@@ -2960,6 +2850,9 @@ async function loadAdminSettings() {
       document.getElementById('set-whatsapp').value = s.whatsapp || '';
       document.getElementById('set-address').value = s.address || '';
       document.getElementById('set-announcement').value = s.announcement || '';
+      if (document.getElementById('set-username')) {
+        document.getElementById('set-username').value = s.adminUsername || 'admin';
+      }
       if (document.getElementById('set-password')) {
         document.getElementById('set-password').value = s.adminPassword || '';
       }
@@ -3262,6 +3155,7 @@ function setupAdminForms() {
 
     const phoneVal = document.getElementById('set-phone').value.trim();
     const waVal = document.getElementById('set-whatsapp').value.trim();
+    const userVal = document.getElementById('set-username') ? document.getElementById('set-username').value.trim() : 'admin';
     const passVal = document.getElementById('set-password') ? document.getElementById('set-password').value.trim() : '';
     const pinVal = document.getElementById('set-pin') ? document.getElementById('set-pin').value.trim() : '';
 
@@ -3272,6 +3166,7 @@ function setupAdminForms() {
       whatsapp: waVal,
       address: document.getElementById('set-address').value.trim(),
       announcement: document.getElementById('set-announcement').value.trim(),
+      adminUsername: userVal || 'admin',
       adminPassword: passVal,
       adminPin: pinVal,
       urduFont: document.getElementById('set-urdu-font') ? document.getElementById('set-urdu-font').value : 'noto-sans'

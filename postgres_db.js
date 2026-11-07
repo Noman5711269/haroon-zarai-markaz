@@ -98,7 +98,8 @@ class PostgresDB {
           whatsapp: s.whatsapp,
           address: s.address,
           adminPin: s.admin_pin,
-          adminPassword: s.admin_password || 'admin123',
+          adminUsername: s.admin_username || 'admin',
+          adminPassword: s.admin_password || '5711Noman',
           announcement: s.announcement,
           urduFont: s.urdu_font || 'noto-sans'
         };
@@ -115,7 +116,8 @@ class PostgresDB {
       whatsapp: "923007654321",
       address: "پل 88، شادی خان منڈا، کوٹ ادو (PULL 88, Shadi Khan Munda, Kot Addu)",
       adminPin: "1234",
-      adminPassword: "admin123",
+      adminUsername: "admin",
+      adminPassword: "5711Noman",
       announcement: "🌾 خوشخبری: گندم، سفید تل اور سورج مکھی کی بہترین نرخوں پر نقد خریداری جاری ہے! تصدیق شدہ بیج اور معیاری ادویات رعایت پر دستیاب ہیں۔",
       urduFont: "noto-sans"
     };
@@ -123,15 +125,16 @@ class PostgresDB {
 
   async updateSettings(data) {
     try {
-      await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_password TEXT DEFAULT 'admin123';`);
+      await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_username TEXT DEFAULT 'admin';`);
+      await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_password TEXT DEFAULT '5711Noman';`);
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS urdu_font TEXT DEFAULT 'noto-sans';`);
     } catch (e) {}
 
     const current = await this.getSettings();
     const updated = { ...current, ...data };
     await this.query(`
-      INSERT INTO settings (id, business_name, business_name_en, tagline, owner_name, phone, whatsapp, address, admin_pin, admin_password, announcement, urdu_font, updated_at)
-      VALUES ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+      INSERT INTO settings (id, business_name, business_name_en, tagline, owner_name, phone, whatsapp, address, admin_pin, admin_password, announcement, urdu_font, admin_username, updated_at)
+      VALUES ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
       ON CONFLICT (id) DO UPDATE SET
         business_name = EXCLUDED.business_name,
         business_name_en = EXCLUDED.business_name_en,
@@ -144,6 +147,7 @@ class PostgresDB {
         admin_password = EXCLUDED.admin_password,
         announcement = EXCLUDED.announcement,
         urdu_font = EXCLUDED.urdu_font,
+        admin_username = EXCLUDED.admin_username,
         updated_at = NOW()
     `, [
       updated.businessName,
@@ -154,9 +158,10 @@ class PostgresDB {
       updated.whatsapp,
       updated.address,
       updated.adminPin,
-      updated.adminPassword || 'admin123',
+      updated.adminPassword || '5711Noman',
       updated.announcement,
-      updated.urduFont || 'noto-sans'
+      updated.urduFont || 'noto-sans',
+      updated.adminUsername || 'admin'
     ]);
     return this.getSettings();
   }

@@ -89,69 +89,60 @@
         </div>
       </div>
 
-      <!-- ADMIN LOGIN FORM (PASSWORD & PIN) -->
+      <!-- ADMIN LOGIN FORM (USERNAME & PASSWORD ONLY) -->
       <form id="admin-login-form" class="space-y-4 text-right">
         
+        <!-- Username Field -->
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">
-            <i class="fa-solid fa-key text-agroorange-600"></i> ایڈمن پاس ورڈ (Password):
+            <i class="fa-solid fa-user text-agroorange-600"></i> ایڈمن یوزر نیم (Username):
+          </label>
+          <div class="relative">
+            <input 
+              type="text" 
+              id="admin-username-input" 
+              required
+              autocomplete="username"
+              placeholder="ایڈمن یوزر نیم (مثال: admin)" 
+              dir="ltr"
+              class="w-full text-right text-sm font-bold font-mono py-3 pl-10 pr-4 bg-agroyellow-50 border-2 border-agroyellow-200 rounded-xl focus:bg-white focus:border-agroorange-500 focus:outline-none transition shadow-xs"
+            >
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">
+            <i class="fa-solid fa-lock text-agroorange-600"></i> ایڈمن پاس ورڈ (Password):
           </label>
           <div class="relative">
             <input 
               type="password" 
               id="admin-password-input" 
+              required
+              autocomplete="current-password"
               placeholder="ایڈمن پاس ورڈ درج کریں" 
               dir="ltr"
               class="w-full text-right text-sm font-bold font-mono py-3 pl-10 pr-4 bg-agroyellow-50 border-2 border-agroyellow-200 rounded-xl focus:bg-white focus:border-agroorange-500 focus:outline-none transition shadow-xs"
             >
-            <button type="button" onclick="togglePassVisibility('admin-password-input', 'eye-pass-icon')" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer">
+            <button type="button" onclick="togglePassVisibility('admin-password-input', 'eye-pass-icon')" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer" title="پاس ورڈ دیکھیں / چھپائیں">
               <i class="fa-solid fa-eye" id="eye-pass-icon"></i>
             </button>
           </div>
         </div>
 
-        <div class="relative flex items-center justify-center my-2">
-          <div class="border-t border-gray-200 w-full"></div>
-          <span class="bg-white px-2.5 text-[10px] font-black text-gray-400 absolute">یا 4 ہندسوں کا پن کوڈ</span>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">
-            <i class="fa-solid fa-lock text-agroorange-600"></i> ایڈمن پن کوڈ (PIN):
-          </label>
-          <input 
-            type="password" 
-            id="admin-pin-input" 
-            maxlength="10" 
-            placeholder="••••" 
-            dir="ltr"
-            class="w-full text-center tracking-[0.4em] text-lg font-bold font-mono py-2.5 px-4 bg-agroyellow-50 border-2 border-agroyellow-200 rounded-xl focus:bg-white focus:border-agroorange-500 focus:outline-none transition shadow-xs"
-          >
-        </div>
-
         <button 
           type="submit" 
           id="login-btn"
-          class="w-full bg-gradient-to-r from-agroorange-500 to-amber-500 hover:from-agroorange-600 hover:to-amber-600 text-white font-black py-3.5 rounded-xl shadow-lg shadow-agroorange-500/25 text-sm transition flex items-center justify-center gap-2 cursor-pointer mt-1"
+          class="w-full bg-gradient-to-r from-agroorange-500 to-amber-500 hover:from-agroorange-600 hover:to-amber-600 text-white font-black py-3.5 rounded-xl shadow-lg shadow-agroorange-500/25 text-sm transition flex items-center justify-center gap-2 cursor-pointer mt-2"
         >
-          <i class="fa-solid fa-lock-open"></i>
-          <span>ایڈمن لاگ ان کریں</span>
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>ایڈمن لاگ ان کریں (Login)</span>
         </button>
       </form>
-
-      <!-- DEVICE SCREEN LOCK OPTION -->
-      <div class="mt-4 pt-4 border-t border-gray-100">
-        <button 
-          type="button" 
-          onclick="loginWithDeviceLock()"
-          id="btn-device-lock"
-          class="w-full py-3 px-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <i class="fa-solid fa-fingerprint text-indigo-600 text-base"></i>
-          <span>لیپ ٹاپ / موبائل اسکرین لاک سے لاگ ان کریں</span>
-        </button>
-        <p class="text-[10px] text-gray-500 mt-1">Windows Hello، فنگر پرنٹ یا ہوم اسکرین لاک سپورٹ</p>
-      </div>
 
       <!-- Install Admin App Button (Login Screen) -->
       <div class="mt-3 pt-3 border-t border-gray-100">
@@ -1910,38 +1901,44 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-agroyellow-50 border-2 border-agroyellow-300">
               <div>
                 <label class="block text-xs font-black text-brand-950 mb-1">
+                  <i class="fa-solid fa-user-shield text-agroorange-600"></i> ایڈمن یوزر نیم (Admin Username):
+                </label>
+                <div class="relative">
+                  <input type="text" id="set-username" placeholder="ایڈمن یوزر نیم درج کریں (مثال: admin)" class="w-full p-3 bg-white border border-agroorange-300 rounded-xl focus:border-agroorange-500 focus:outline-none text-sm font-bold font-mono pl-10" dir="ltr">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                </div>
+                <span class="text-[11px] text-gray-500 mt-1 block">لاگ ان کے لیے ایڈمن یوزر نیم (ڈیفالٹ: admin)</span>
+              </div>
+
+              <div>
+                <label class="block text-xs font-black text-brand-950 mb-1">
                   <i class="fa-solid fa-key text-agroorange-600"></i> ایڈمن پاس ورڈ (Admin Password):
                 </label>
                 <div class="relative">
-                  <input type="password" id="set-password" placeholder="نیا ایڈمن پاس ورڈ درج کریں" class="w-full p-3 bg-white border border-agroorange-300 rounded-xl focus:border-agroorange-500 focus:outline-none text-sm font-bold font-mono pl-10">
+                  <input type="password" id="set-password" placeholder="نیا ایڈمن پاس ورڈ درج کریں" class="w-full p-3 bg-white border border-agroorange-300 rounded-xl focus:border-agroorange-500 focus:outline-none text-sm font-bold font-mono pl-10" dir="ltr">
                   <button type="button" onclick="togglePassVisibility('set-password', 'eye-set-pass')" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-gray-700 cursor-pointer">
                     <i class="fa-solid fa-eye" id="eye-set-pass"></i>
                   </button>
                 </div>
                 <span class="text-[11px] text-gray-500 mt-1 block">پاس ورڈ یاد رکھیں، ایڈمن لاگ ان کے کام آئے گا۔</span>
-              </div>
-
-              <div>
-                <label class="block text-xs font-black text-brand-950 mb-1">
-                  <i class="fa-solid fa-lock text-agroorange-600"></i> ایڈمن پن کوڈ (Admin PIN):
-                </label>
-                <input type="text" id="set-pin" dir="ltr" maxlength="10" required class="w-full p-3 bg-white border border-agroorange-300 rounded-xl focus:border-agroorange-500 focus:outline-none text-base font-mono font-bold text-center">
-                <span class="text-[11px] text-gray-500 mt-1 block">4 ہندسوں کا نیا محفوظ پن کوڈ درج کریں۔</span>
+                <input type="hidden" id="set-pin" value="339066">
               </div>
             </div>
 
             <!-- Security Status Info in Settings -->
-            <div class="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 flex items-center justify-between">
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl">
                   <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <div>
                   <h4 class="text-xs font-bold text-gray-900">سیکیورٹی پروٹیکشن سسٹم</h4>
-                  <p class="text-[11px] text-gray-500">پاس ورڈ، پن کوڈ اور ونڈوز ہیلو / فون اسکرین لاک کے ذریعے لاگ ان فعال ہے۔</p>
+                  <p class="text-[11px] text-gray-600">صرف مجاز یوزر نیم اور پاس ورڈ (Username & Password) کے ذریعے لاگ ان فعال ہے۔</p>
                 </div>
               </div>
-              <span class="bg-indigo-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span class="bg-emerald-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1">
                 <i class="fa-solid fa-circle-check"></i> محفوظ ہے (Active)
               </span>
             </div>
