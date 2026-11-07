@@ -273,14 +273,14 @@ const server = http.createServer(async (req, res) => {
   // API Routes
   if (pathname.startsWith('/api/')) {
     try {
-      // 1. Admin Login (Username & Password ONLY)
+      // 1. Admin Login (STRICT: Created Username & Password ONLY)
       if (pathname === '/api/admin/login' && method === 'POST') {
         const body = await parseJsonBody(req);
         let settings;
         try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
 
-        const validPass = String((settings && settings.adminPassword) || cachedAdminPassword || '5711Noman').trim();
-        const configuredUsername = String((settings && settings.adminUsername) || cachedAdminUsername || 'admin').trim();
+        const validPass = String((settings && settings.adminPassword) || cachedAdminPassword || '').trim();
+        const validUsername = String((settings && settings.adminUsername) || cachedAdminUsername || '').trim();
 
         const inputUsername = String(body.username || '').trim();
         const inputPass = String(body.password || '').trim();
@@ -289,34 +289,11 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 400, { success: false, message: "براہ کرم یوزر نیم اور پاس ورڈ دونوں درج کریں!" });
         }
 
-        const normalizedInput = inputUsername.toLowerCase();
-        const allowedUsernames = new Set([
-          configuredUsername.toLowerCase(),
-          'admin',
-          'haroon',
-          'noman',
-          'mian haroon',
-          'mian haroon rasheed',
-          '03007517314',
-          '0300-7517314',
-          '03116667314',
-          '0311-6667314'
-        ]);
+        // STRICT: Only the exact username and password created in admin settings
+        const usernameMatches = (inputUsername.toLowerCase() === validUsername.toLowerCase());
+        const passwordMatches = (inputPass === validPass);
 
-        const validPasswords = new Set([
-          validPass,
-          cachedAdminPassword,
-          '5711Noman',
-          '339066',
-          'admin123',
-          'admin',
-          '1234'
-        ]);
-
-        const passwordMatches = validPasswords.has(inputPass);
-        const usernameMatches = allowedUsernames.has(normalizedInput) || (Boolean(inputUsername) && passwordMatches);
-
-        if (passwordMatches && Boolean(inputUsername)) {
+        if (usernameMatches && passwordMatches) {
           const token = 'hzm_' + crypto.randomBytes(16).toString('hex');
           adminSessions.add(token);
           return sendJson(res, 200, {
@@ -328,7 +305,10 @@ const server = http.createServer(async (req, res) => {
           });
         }
 
-        return sendJson(res, 401, { success: false, message: "غلط ایڈمن پاس ورڈ! برائے مہربانی درست پاس ورڈ (5711Noman یا 339066) درج کریں۔" });
+        return sendJson(res, 401, {
+          success: false,
+          message: "غلط ایڈمن یوزر نیم یا پاس ورڈ! صرف آپ کے تخلیق کردہ یوزر نیم اور پاس ورڈ سے لاگ ان ممکن ہے۔"
+        });
       }
 
       // 1.1 Face Verification via Live Camera
