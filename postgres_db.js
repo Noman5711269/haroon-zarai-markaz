@@ -796,9 +796,34 @@ class PostgresDB {
     return { farmer: updatedFarmer, transaction: savedTx };
   }
 
+  // Automatically purge farmer login activity records older than 3 days
+  async cleanOldFarmerLogins() {
+    try {
+      await this.query(`DELETE FROM farmer_logins WHERE login_time < NOW() - INTERVAL '3 days'`);
+      return true;
+    } catch (e) {
+      console.warn('cleanOldFarmerLogins DB warning:', e.message);
+      return false;
+    }
+  }
+
+  // Clear all farmer login activity logs
+  async clearAllFarmerLogins() {
+    try {
+      await this.query(`DELETE FROM farmer_logins`);
+      return true;
+    } catch (e) {
+      console.warn('clearAllFarmerLogins DB warning:', e.message);
+      return false;
+    }
+  }
+
   // Record Farmer Login Activity for Admin
   async recordFarmerLogin(loginData) {
     try {
+      // Auto-clean entries older than 3 days
+      await this.cleanOldFarmerLogins();
+
       await this.query(`
         INSERT INTO farmer_logins (farmer_id, farmer_name, mobile, login_time, ip_address, method)
         VALUES ($1, $2, $3, NOW(), $4, $5)
@@ -815,8 +840,11 @@ class PostgresDB {
     }
   }
 
-  async getFarmerLogins(limit = 30) {
+  async getFarmerLogins(limit = 50) {
     try {
+      // Purge records older than 3 days automatically
+      await this.cleanOldFarmerLogins();
+
       const res = await this.query(`
         SELECT l.*, 
                COALESCE(NULLIF(l.mobile, ''), f.mobile, f.cnic, '') as clean_mobile,
@@ -827,6 +855,7 @@ class PostgresDB {
                f.registered as is_registered
         FROM farmer_logins l
         LEFT JOIN farmers f ON f.id = l.farmer_id
+        WHERE l.login_time >= NOW() - INTERVAL '3 days'
         ORDER BY l.login_time DESC
         LIMIT $1
       `, [limit]);

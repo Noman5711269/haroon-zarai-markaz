@@ -3221,13 +3221,21 @@ async function loadFarmerLogins() {
   try {
     const res = await adminFetch('/api/admin/logins');
     if (res.ok) {
-      const logins = await res.json();
+      const rawLogins = await res.json();
+      const threeDaysAgoMs = Date.now() - (3 * 24 * 60 * 60 * 1000);
+      const logins = (rawLogins || []).filter(l => {
+        if (!l.loginTime) return true;
+        const t = new Date(l.loginTime).getTime();
+        return isNaN(t) || t >= threeDaysAgoMs;
+      });
+
       if (!logins || logins.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" class="p-8 text-center text-gray-400 font-semibold">
-              <i class="fa-solid fa-user-clock text-3xl mb-2 text-gray-300 block"></i>
-              ابھی تک کوئی کسان لاگ ان ریکارڈ نہیں ہے۔
+            <td colspan="7" class="p-8 text-center text-gray-400 font-semibold font-urdu">
+              <i class="fa-solid fa-user-clock text-3xl mb-2 text-emerald-400 block"></i>
+              پچھلے 3 دنوں میں کوئی نیا کسان لاگ ان ریکارڈ موجود نہیں ہے۔<br>
+              <span class="text-xs text-gray-400 font-sans mt-1 inline-block">(3 دن سے پرانا لاگ ان ریکارڈ خودکار سسٹم سے صاف کر دیا جاتا ہے)</span>
             </td>
           </tr>
         `;
@@ -3309,6 +3317,23 @@ async function loadFarmerLogins() {
   } catch (err) {
     console.warn('loadFarmerLogins error:', err);
     tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-rose-600 font-bold">سرور سے کسان لاگ ان ریکارڈ حاصل کرنے میں مسئلہ آیا ہے۔</td></tr>`;
+  }
+}
+
+// Clear all farmer login activity logs
+async function clearAllFarmerLoginsConfirm() {
+  if (!confirm('کیا آپ واقعی کسان لاگ ان کا تمام سابقہ لاگ ریکارڈ صاف کرنا چاہتے ہیں؟\nنوٹ: کسانوں کے اصل کھاتے، بقایا اور ٹرانزیکشنز بالکل محفوظ رہیں گی۔')) return;
+  try {
+    const res = await adminFetch('/api/admin/logins', { method: 'DELETE' });
+    if (res.ok) {
+      showToast('کسان لاگ ان لاگز کامیابی سے صاف کر دیے گئے', 'success');
+      loadFarmerLogins();
+    } else {
+      showToast('لاگز صاف کرنے میں خرابی ہوئی', 'error');
+    }
+  } catch (err) {
+    console.error('clearAllFarmerLoginsConfirm error:', err);
+    showToast('سرور کنکشن ایرر', 'error');
   }
 }
 

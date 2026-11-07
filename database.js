@@ -548,8 +548,33 @@ class Database {
     return db.farmers.find(f => this.matchFarmer(f, query)) || null;
   }
 
+  // Automatically purge farmer login activity records older than 3 days
+  cleanOldFarmerLogins() {
+    const db = this.read();
+    if (!Array.isArray(db.farmerLogins)) return false;
+    const threeDaysAgoMs = Date.now() - (3 * 24 * 60 * 60 * 1000);
+    const initialLen = db.farmerLogins.length;
+    db.farmerLogins = db.farmerLogins.filter(entry => {
+      const t = new Date(entry.loginTime).getTime();
+      return !isNaN(t) && t >= threeDaysAgoMs;
+    });
+    if (db.farmerLogins.length !== initialLen) {
+      this.write(db);
+    }
+    return true;
+  }
+
+  // Clear all farmer login activity logs
+  clearAllFarmerLogins() {
+    const db = this.read();
+    db.farmerLogins = [];
+    this.write(db);
+    return true;
+  }
+
   // Record Farmer Login Activity for Admin
   recordFarmerLogin(loginData) {
+    this.cleanOldFarmerLogins();
     const db = this.read();
     if (!db.farmerLogins) db.farmerLogins = [];
     const farmer = db.farmers.find(f => f.id === loginData.farmerId);
@@ -564,7 +589,13 @@ class Database {
       ip: loginData.ip || 'Local Client'
     };
     db.farmerLogins.unshift(entry);
-    if (db.farmerLogins.length > 100) db.farmerLogins = db.farmerLogins.slice(0, 100);
+    
+    // Purge records older than 3 days
+    const threeDaysAgoMs = Date.now() - (3 * 24 * 60 * 60 * 1000);
+    db.farmerLogins = db.farmerLogins.filter(item => {
+      const t = new Date(item.loginTime).getTime();
+      return !isNaN(t) && t >= threeDaysAgoMs;
+    });
 
     if (farmer) farmer.lastLogin = entry.loginTime;
 
@@ -572,9 +603,14 @@ class Database {
     return entry;
   }
 
-  getFarmerLogins(limit = 30) {
+  getFarmerLogins(limit = 50) {
+    this.cleanOldFarmerLogins();
     const db = this.read();
-    const logins = db.farmerLogins || [];
+    const threeDaysAgoMs = Date.now() - (3 * 24 * 60 * 60 * 1000);
+    const logins = (db.farmerLogins || []).filter(item => {
+      const t = new Date(item.loginTime).getTime();
+      return !isNaN(t) && t >= threeDaysAgoMs;
+    });
     return logins.slice(0, limit).map(l => {
       const farmer = db.farmers.find(f => f.id === l.farmerId);
       return {

@@ -1055,16 +1055,30 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, await db.getStats());
       }
 
-      // 10. Admin Farmer Logins Activity
-      if (pathname === '/api/admin/logins' && method === 'GET') {
+      // 10. Admin Farmer Logins Activity (Automatically purges records older than 3 days)
+      if (pathname === '/api/admin/logins') {
         if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'Unauthorized' });
-        let logins = [];
-        try {
-          logins = await db.getFarmerLogins(50);
-        } catch (err) {
-          logins = localDb.getFarmerLogins(50);
+
+        if (method === 'GET') {
+          let logins = [];
+          try {
+            if (typeof db.cleanOldFarmerLogins === 'function') await db.cleanOldFarmerLogins();
+            logins = await db.getFarmerLogins(50);
+          } catch (err) {
+            logins = localDb.getFarmerLogins(50);
+          }
+          return sendJson(res, 200, logins);
         }
-        return sendJson(res, 200, logins);
+
+        if (method === 'DELETE') {
+          try {
+            if (typeof db.clearAllFarmerLogins === 'function') await db.clearAllFarmerLogins();
+            if (typeof localDb.clearAllFarmerLogins === 'function') localDb.clearAllFarmerLogins();
+          } catch (err) {
+            console.warn('clearAllFarmerLogins error:', err);
+          }
+          return sendJson(res, 200, { success: true, message: 'کسان لاگ ان لاگز کامیابی سے صاف کر دیے گئے۔' });
+        }
       }
 
       // 11. Complaints Box (Public submit & Admin management)
@@ -1267,4 +1281,21 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`  Server is running on: http://localhost:${PORT}`);
   console.log(`  Admin Portal link:    http://localhost:${PORT}/admin`);
   console.log(`====================================================`);
+
+  // Run initial cleanup of logins older than 3 days on startup
+  setTimeout(async () => {
+    try {
+      if (typeof db.cleanOldFarmerLogins === 'function') await db.cleanOldFarmerLogins();
+      if (typeof localDb.cleanOldFarmerLogins === 'function') localDb.cleanOldFarmerLogins();
+      console.log('🧹 Initial purge of farmer logins older than 3 days completed.');
+    } catch (e) {}
+  }, 5000);
+
+  // Automatically purge farmer login records older than 3 days every 60 minutes
+  setInterval(async () => {
+    try {
+      if (typeof db.cleanOldFarmerLogins === 'function') await db.cleanOldFarmerLogins();
+      if (typeof localDb.cleanOldFarmerLogins === 'function') localDb.cleanOldFarmerLogins();
+    } catch (e) {}
+  }, 60 * 60 * 1000);
 });
