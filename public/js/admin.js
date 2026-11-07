@@ -53,12 +53,27 @@ function checkAuthAndInit() {
   }
 }
 
-function adminFetch(url, options = {}) {
+async function adminFetch(url, options = {}) {
   const token = sessionStorage.getItem('adminToken') || '';
   if (!options.headers) options.headers = {};
   options.headers['Content-Type'] = 'application/json';
   options.headers['x-admin-token'] = token;
-  return fetch(url, options);
+  const res = await fetch(url, options);
+  if (res.status === 401 || res.status === 403) {
+    sessionStorage.removeItem('adminToken');
+    const loginScreen = document.getElementById('admin-login-screen');
+    const dashboardApp = document.getElementById('admin-dashboard-app');
+    const errBox = document.getElementById('login-error');
+    if (loginScreen && dashboardApp) {
+      dashboardApp.classList.add('hidden');
+      loginScreen.classList.remove('hidden');
+      if (errBox) {
+        errBox.classList.remove('hidden');
+        errBox.innerText = 'سیکیورٹی سیشن کی مدت ختم ہو چکی ہے۔ براہ کرم اپنے ایڈمن یوزر نیم اور پاس ورڈ سے دوبارہ لاگ ان کریں۔';
+      }
+    }
+  }
+  return res;
 }
 
 // --- Admin Authentication (Username & Password ONLY) ---

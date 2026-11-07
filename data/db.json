@@ -523,7 +523,71 @@
       "precautions": ""
     }
   ],
-  "farmers": [],
+  "farmers": [
+    {
+      "id": "HZM-102",
+      "name": "MUHAMMAD NOMAN",
+      "nameEn": "",
+      "fatherName": "ABDUL RASHEED",
+      "mobile": "03421040330",
+      "cnic": "3230305198297",
+      "email": "",
+      "password": "5711Noman",
+      "registered": true,
+      "village": "Chah Sammy wala,kot addu",
+      "landAcres": 10,
+      "currentBalance": 0,
+      "notes": "",
+      "createdAt": "2026-11-07",
+      "transactions": []
+    },
+    {
+      "id": "HZM-101",
+      "name": "MUHAMMAD JUNAID",
+      "nameEn": "",
+      "fatherName": "MUHAMMAD IQBAL",
+      "mobile": "03162835813",
+      "cnic": "3230305198297",
+      "email": "",
+      "password": "5711Noman",
+      "registered": true,
+      "village": "CHAH SAMMY WALA",
+      "landAcres": 15,
+      "currentBalance": 5000,
+      "notes": "",
+      "createdAt": "2026-11-06",
+      "transactions": [
+        {
+          "id": "TX-787922",
+          "date": "2026-11-06",
+          "type": "debit",
+          "category": "کیڑے مار دوا",
+          "productName": "LAMBDA",
+          "quantity": "2",
+          "unitPrice": 0,
+          "description": "LAMBDA (2)",
+          "amount": 1500,
+          "balanceAfter": 1500,
+          "addedBy": "ایڈمن ہارون",
+          "proofImage": ""
+        },
+        {
+          "id": "TX-007957",
+          "date": "2026-11-06",
+          "type": "debit",
+          "category": "جڑی بوٹی مار دوا",
+          "productName": "KoraJin",
+          "quantity": "3",
+          "unitPrice": 0,
+          "description": "KoraJin (3)",
+          "amount": 3500,
+          "balanceAfter": 5000,
+          "addedBy": "ایڈمن ہارون",
+          "proofImage": "/uploads/prod_1794003049099_2573.jpg"
+        }
+      ]
+    }
+  ],
   "tradeRequests": [],
   "farmerLogins": [],
   "passwordRequests": [],

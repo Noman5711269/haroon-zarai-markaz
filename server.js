@@ -67,15 +67,22 @@ const MIME_TYPES = {
 };
 
 // --- Security & Session Management ---
-// Active admin sessions store: token -> { createdAt, lastActiveAt, ip }
-// Idle timeout: 4 hours, Absolute expiration: 24 hours
+// Active admin sessions store & persistent cryptographic signature
+// Survives Render cloud restarts; 7 days session lifetime
 const adminSessions = new Map();
-const SESSION_IDLE_TIMEOUT_MS = 4 * 60 * 60 * 1000;  // 4 hours
-const SESSION_MAX_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours
+const revokedTokens = new Set();
+const AUTH_SECRET = process.env.SESSION_SECRET || 'hzm_auth_secret_key_haroon_zarai_markaz_kot_addu_5711';
 
 function createAdminSession(ip = '') {
-  const token = 'hzm_' + crypto.randomBytes(24).toString('hex');
   const now = Date.now();
+  const payload = {
+    sub: 'admin',
+    iat: now,
+    exp: now + 7 * 24 * 60 * 60 * 1000 // 7 days session lifetime
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const hmac = crypto.createHmac('sha256', AUTH_SECRET).update(payloadB64).digest('base64url');
+  const token = `hzm_${payloadB64}.${hmac}`;
   adminSessions.set(token, {
     createdAt: now,
     lastActiveAt: now,
@@ -86,28 +93,51 @@ function createAdminSession(ip = '') {
 
 function isValidAdminSession(token) {
   if (!token || typeof token !== 'string') return false;
+  if (revokedTokens.has(token)) return false;
+
+  // 1. Check in-memory session cache
   const session = adminSessions.get(token);
-  if (!session) return false;
-
-  const now = Date.now();
-  // Check maximum lifetime (24h)
-  if (now - session.createdAt > SESSION_MAX_LIFETIME_MS) {
-    adminSessions.delete(token);
-    return false;
-  }
-  // Check idle timeout (4h)
-  if (now - session.lastActiveAt > SESSION_IDLE_TIMEOUT_MS) {
-    adminSessions.delete(token);
-    return false;
+  if (session) {
+    const now = Date.now();
+    if (now - session.createdAt > 7 * 24 * 60 * 60 * 1000) {
+      adminSessions.delete(token);
+      return false;
+    }
+    session.lastActiveAt = now;
+    return true;
   }
 
-  // Refresh activity timestamp
-  session.lastActiveAt = now;
-  return true;
+  // 2. Cryptographic signature verification (persists across Render server restarts)
+  if (!token.startsWith('hzm_')) return false;
+  try {
+    const raw = token.slice(4);
+    const dotIdx = raw.indexOf('.');
+    if (dotIdx === -1) return false;
+    const payloadB64 = raw.slice(0, dotIdx);
+    const sig = raw.slice(dotIdx + 1);
+    const expectedSig = crypto.createHmac('sha256', AUTH_SECRET).update(payloadB64).digest('base64url');
+    if (sig.length !== expectedSig.length) return false;
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return false;
+
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    const now = Date.now();
+    if (now > payload.exp) return false;
+
+    // Cache in memory for quick subsequent lookups
+    adminSessions.set(token, {
+      createdAt: payload.iat || now,
+      lastActiveAt: now,
+      ip: 'restored'
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function revokeAdminSession(token) {
-  if (token && adminSessions.has(token)) {
+  if (token) {
+    revokedTokens.add(token);
     adminSessions.delete(token);
     return true;
   }
