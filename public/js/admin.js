@@ -2899,54 +2899,42 @@ function updateShopLogoPreviewUI(logoUrl) {
   const removeBtn = document.getElementById('btn-remove-shop-logo');
   const hiddenInput = document.getElementById('set-shop-logo');
 
+  const finalLogo = logoUrl || '/images/hzm-logo.jpg';
   if (hiddenInput) hiddenInput.value = logoUrl || '';
 
-  if (logoUrl) {
-    if (previewImg) {
-      previewImg.src = logoUrl;
-      previewImg.classList.remove('hidden');
+  if (previewImg) {
+    previewImg.src = finalLogo;
+    previewImg.classList.remove('hidden');
+  }
+  if (placeholder) placeholder.classList.add('hidden');
+  if (removeBtn) {
+    if (logoUrl && logoUrl !== '/images/hzm-logo.jpg') {
+      removeBtn.classList.remove('hidden');
+    } else {
+      removeBtn.classList.add('hidden');
     }
-    if (placeholder) placeholder.classList.add('hidden');
-    if (removeBtn) removeBtn.classList.remove('hidden');
-  } else {
-    if (previewImg) {
-      previewImg.src = '';
-      previewImg.classList.add('hidden');
-    }
-    if (placeholder) placeholder.classList.remove('hidden');
-    if (removeBtn) removeBtn.classList.add('hidden');
   }
 }
 
 function applyShopLogo(logoUrl) {
+  const finalLogo = logoUrl || '/images/hzm-logo.jpg';
+
   // Admin Login Screen Logo
   const loginLogoImg = document.getElementById('admin-login-logo-img');
   const loginLogoIcon = document.getElementById('admin-login-logo-icon');
-  if (loginLogoImg && loginLogoIcon) {
-    if (logoUrl) {
-      loginLogoImg.src = logoUrl;
-      loginLogoImg.classList.remove('hidden');
-      loginLogoIcon.classList.add('hidden');
-    } else {
-      loginLogoImg.src = '';
-      loginLogoImg.classList.add('hidden');
-      loginLogoIcon.classList.remove('hidden');
-    }
+  if (loginLogoImg) {
+    loginLogoImg.src = finalLogo;
+    loginLogoImg.classList.remove('hidden');
+    if (loginLogoIcon) loginLogoIcon.classList.add('hidden');
   }
 
   // Admin Header Logo
   const headerLogoImg = document.getElementById('admin-header-logo-img');
   const headerLogoIcon = document.getElementById('admin-header-logo-icon');
-  if (headerLogoImg && headerLogoIcon) {
-    if (logoUrl) {
-      headerLogoImg.src = logoUrl;
-      headerLogoImg.classList.remove('hidden');
-      headerLogoIcon.classList.add('hidden');
-    } else {
-      headerLogoImg.src = '';
-      headerLogoImg.classList.add('hidden');
-      headerLogoIcon.classList.remove('hidden');
-    }
+  if (headerLogoImg) {
+    headerLogoImg.src = finalLogo;
+    headerLogoImg.classList.remove('hidden');
+    if (headerLogoIcon) headerLogoIcon.classList.add('hidden');
   }
 }
 
