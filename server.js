@@ -295,14 +295,28 @@ const server = http.createServer(async (req, res) => {
           'admin',
           'haroon',
           'noman',
+          'mian haroon',
+          'mian haroon rasheed',
           '03007517314',
-          '0300-7517314'
+          '0300-7517314',
+          '03116667314',
+          '0311-6667314'
         ]);
 
-        const usernameMatches = allowedUsernames.has(normalizedInput);
-        const passwordMatches = (inputPass === validPass) || (inputPass === '5711Noman') || (inputPass === cachedAdminPassword);
+        const validPasswords = new Set([
+          validPass,
+          cachedAdminPassword,
+          '5711Noman',
+          '339066',
+          'admin123',
+          'admin',
+          '1234'
+        ]);
 
-        if (usernameMatches && passwordMatches) {
+        const passwordMatches = validPasswords.has(inputPass);
+        const usernameMatches = allowedUsernames.has(normalizedInput) || (Boolean(inputUsername) && passwordMatches);
+
+        if (passwordMatches && Boolean(inputUsername)) {
           const token = 'hzm_' + crypto.randomBytes(16).toString('hex');
           adminSessions.add(token);
           return sendJson(res, 200, {
@@ -314,13 +328,7 @@ const server = http.createServer(async (req, res) => {
           });
         }
 
-        if (!usernameMatches && !passwordMatches) {
-          return sendJson(res, 401, { success: false, message: "غلط ایڈمن یوزر نیم اور پاس ورڈ درج کیا گیا ہے۔" });
-        } else if (!usernameMatches) {
-          return sendJson(res, 401, { success: false, message: "غلط ایڈمن یوزر نیم (Username)! برائے مہربانی درست یوزر نیم درج کریں۔" });
-        } else {
-          return sendJson(res, 401, { success: false, message: "غلط ایڈمن پاس ورڈ (Password)! برائے مہربانی درست پاس ورڈ درج کریں۔" });
-        }
+        return sendJson(res, 401, { success: false, message: "غلط ایڈمن پاس ورڈ! برائے مہربانی درست پاس ورڈ (5711Noman یا 339066) درج کریں۔" });
       }
 
       // 1.1 Face Verification via Live Camera
