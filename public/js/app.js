@@ -89,6 +89,32 @@ function cleanTelNumber(raw) {
   return String(raw).replace(/[^0-9+]/g, '');
 }
 
+function applyShopLogo(logoUrl) {
+  if (!logoUrl) return;
+
+  // 1. Hero Animated Emblem (index.html, khata.html)
+  const heroLogoContainers = document.querySelectorAll('.motion-logo-box > div, #hero-logo-container');
+  heroLogoContainers.forEach(container => {
+    container.innerHTML = `<img src="${logoUrl}" alt="دکان کا لوگو" class="w-full h-full object-cover rounded-[22px] shadow-lg">`;
+  });
+
+  // 2. Navigation Header Logos (across all user pages)
+  const navLogoWraps = document.querySelectorAll('header a .w-13.h-13, header a .w-12.h-12, .nav-logo-container');
+  navLogoWraps.forEach(wrap => {
+    wrap.innerHTML = `<img src="${logoUrl}" alt="لوگو" class="w-full h-full object-cover rounded-xl shadow-xs">`;
+    wrap.classList.remove('p-2.5', 'p-2');
+    wrap.classList.add('p-0.5');
+  });
+
+  // 3. Footer Logos if any
+  const footerLogoWraps = document.querySelectorAll('footer .w-12.h-12, footer .w-14.h-14');
+  footerLogoWraps.forEach(wrap => {
+    wrap.innerHTML = `<img src="${logoUrl}" alt="لوگو" class="w-full h-full object-cover rounded-xl shadow-xs">`;
+    wrap.classList.remove('p-2');
+    wrap.classList.add('p-0.5');
+  });
+}
+
 // 1. Load Settings
 async function loadSettings() {
   try {
@@ -98,6 +124,9 @@ async function loadSettings() {
       
       // Apply active Urdu font chosen by Admin
       applyUrduFont(globalSettings.urduFont || 'noto-sans');
+      
+      // Apply Custom Shop Logo if uploaded by Admin (Max 7MB)
+      applyShopLogo(globalSettings.shopLogo || '');
       
       const phone = globalSettings.phone || '0300-7654321';
       const cleanTel = cleanTelNumber(phone);
@@ -2113,6 +2142,13 @@ function closeComplaintModal() {
 function handleComplaintImageSelect(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
+
+  // Maximum 2MB limit for complaint photo
+  if (file.size > 2 * 1024 * 1024) {
+    alert('تصویر کا سائز 2MB سے زیادہ ہے! برائے مہربانی زیادہ سے زیادہ 2MB سائز کی تصویر منتخب کریں۔');
+    e.target.value = '';
+    return;
+  }
 
   const reader = new FileReader();
   reader.onload = function(evt) {

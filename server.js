@@ -552,7 +552,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      // 2.5 Image Upload Endpoint (Strict MIME, Magic Bytes & Size Validation)
+      // 2.5 Image Upload Endpoint (Strict MIME, Magic Bytes & Size Limits: 2MB for general images, 7MB for Logo)
       if (pathname === '/api/upload' && method === 'POST') {
         if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'غیر مجاز رسائی (Unauthorized)' });
         const body = await parseJsonBody(req);
@@ -570,8 +570,16 @@ const server = http.createServer(async (req, res) => {
         const base64Data = match[2];
         const buffer = Buffer.from(base64Data, 'base64');
 
-        if (buffer.length > 10 * 1024 * 1024) {
-          return sendJson(res, 400, { error: 'تصویر کا سائز 10MB سے زیادہ نہیں ہو سکتا۔' });
+        // Size Limits: 7MB for Shop/App Logo, strictly 2MB for all other general images
+        const isLogo = Boolean(body.isLogo || body.type === 'logo' || body.category === 'logo');
+        const maxLimitBytes = isLogo ? (7 * 1024 * 1024) : (2 * 1024 * 1024);
+
+        if (buffer.length > maxLimitBytes) {
+          return sendJson(res, 400, {
+            error: isLogo
+              ? 'دکان کے لوگو یا تصویر کا سائز 7MB سے زیادہ نہیں ہو سکتا۔ براہ کرم 7MB سے کم سائز کی تصویر منتخب کریں۔'
+              : 'عام تصاویر (پراڈکٹ، رسید یا ثبوت) کا سائز 2MB سے زیادہ نہیں ہو سکتا۔ براہ کرم 2MB یا اس سے کم سائز کی تصویر منتخب کریں۔'
+          });
         }
 
         // Deep Magic Bytes Inspection to block malicious masqueraded payloads
@@ -589,7 +597,8 @@ const server = http.createServer(async (req, res) => {
             fs.mkdirSync(uploadsDir, { recursive: true });
           }
 
-          const filename = `proof_${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${ext}`;
+          const prefix = isLogo ? 'logo' : 'proof';
+          const filename = `${prefix}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${ext}`;
           const filePath = path.join(uploadsDir, filename);
           fs.writeFileSync(filePath, buffer);
 
@@ -608,10 +617,25 @@ const server = http.createServer(async (req, res) => {
             }
           } catch (e) {}
 
-          console.log(`📸 Image verified & saved: /uploads/${filename} (${buffer.length} bytes) to disk & cloud DB`);
+          // If this is a shop logo, automatically sync to settings
+          if (isLogo) {
+            try {
+              if (typeof db.updateSettings === 'function') {
+                await db.updateSettings({ shopLogo: `/uploads/${filename}` });
+              }
+            } catch (e) {}
+            try {
+              if (db !== localDb && typeof localDb.updateSettings === 'function') {
+                localDb.updateSettings({ shopLogo: `/uploads/${filename}` });
+              }
+            } catch (e) {}
+          }
+
+          console.log(`📸 Image verified & saved (${isLogo ? 'LOGO 7MB max' : 'STANDARD 2MB max'}): /uploads/${filename} (${buffer.length} bytes)`);
           return sendJson(res, 200, {
             success: true,
-            url: `/uploads/${filename}`
+            url: `/uploads/${filename}`,
+            isLogo
           });
         } catch (uploadErr) {
           console.error('File upload save error:', uploadErr);

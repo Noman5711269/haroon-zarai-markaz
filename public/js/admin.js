@@ -25,6 +25,11 @@ function escapeJs(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Pre-load public settings to display custom shop logo on login screen
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    if (s && s.shopLogo) applyShopLogo(s.shopLogo);
+  }).catch(() => {});
+
   checkAuthAndInit();
   setupAdminForms();
 });
@@ -1157,6 +1162,14 @@ function quickOpenKhataTx(farmerId, mode = 'debit') {
 function handleQuickTxProofFile(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+
+  // Maximum 2MB limit on transaction proof image
+  if (file.size > 2 * 1024 * 1024) {
+    alert('تصویر کا سائز 2MB سے زیادہ ہے! برائے مہربانی 2MB یا اس سے کم سائز کی تصویر منتخب کریں۔');
+    input.value = '';
+    return;
+  }
+
   const reader = new FileReader();
 
   reader.onload = (e) => {
@@ -1630,6 +1643,14 @@ if (modalTxForm) {
 function handleTxProofFile(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+
+  // Maximum 2MB limit on transaction proof image
+  if (file.size > 2 * 1024 * 1024) {
+    alert('تصویر کا سائز 2MB سے زیادہ ہے! برائے مہربانی 2MB یا اس سے کم سائز کی تصویر منتخب کریں۔');
+    input.value = '';
+    return;
+  }
+
   const reader = new FileReader();
 
   reader.onload = (e) => {
@@ -2059,6 +2080,13 @@ function handleEditTxPhotoSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
+  // Maximum 2MB limit on edit transaction photo
+  if (file.size > 2 * 1024 * 1024) {
+    alert('تصویر کا سائز 2MB سے زیادہ ہے! برائے مہربانی زیادہ سے زیادہ 2MB سائز کی تصویر منتخب کریں۔');
+    e.target.value = '';
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = async function(evt) {
     const base64Data = evt.target.result;
@@ -2277,8 +2305,16 @@ function handleProductImageFile(input, mode) {
   const file = input.files && input.files[0];
   if (!file) return;
 
+  // Maximum 2MB limit for product photos
+  if (file.size > 2 * 1024 * 1024) {
+    alert('تصویر کا سائز 2MB سے زیادہ ہے! برائے مہربانی زیادہ سے زیادہ 2MB سائز کی تصویر منتخب کریں۔');
+    input.value = '';
+    return;
+  }
+
   if (!file.type.startsWith('image/')) {
     alert('براہ کرم تصویر (Image File) منتخب فرمائیں۔');
+    input.value = '';
     return;
   }
 
@@ -2856,6 +2892,127 @@ async function deleteTradeRequest(id) {
   }
 }
 
+// --- Shop Logo Management (Max 7MB) ---
+function updateShopLogoPreviewUI(logoUrl) {
+  const previewImg = document.getElementById('shop-logo-preview-img');
+  const placeholder = document.getElementById('shop-logo-preview-placeholder');
+  const removeBtn = document.getElementById('btn-remove-shop-logo');
+  const hiddenInput = document.getElementById('set-shop-logo');
+
+  if (hiddenInput) hiddenInput.value = logoUrl || '';
+
+  if (logoUrl) {
+    if (previewImg) {
+      previewImg.src = logoUrl;
+      previewImg.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (removeBtn) removeBtn.classList.remove('hidden');
+  } else {
+    if (previewImg) {
+      previewImg.src = '';
+      previewImg.classList.add('hidden');
+    }
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (removeBtn) removeBtn.classList.add('hidden');
+  }
+}
+
+function applyShopLogo(logoUrl) {
+  // Admin Login Screen Logo
+  const loginLogoImg = document.getElementById('admin-login-logo-img');
+  const loginLogoIcon = document.getElementById('admin-login-logo-icon');
+  if (loginLogoImg && loginLogoIcon) {
+    if (logoUrl) {
+      loginLogoImg.src = logoUrl;
+      loginLogoImg.classList.remove('hidden');
+      loginLogoIcon.classList.add('hidden');
+    } else {
+      loginLogoImg.src = '';
+      loginLogoImg.classList.add('hidden');
+      loginLogoIcon.classList.remove('hidden');
+    }
+  }
+
+  // Admin Header Logo
+  const headerLogoImg = document.getElementById('admin-header-logo-img');
+  const headerLogoIcon = document.getElementById('admin-header-logo-icon');
+  if (headerLogoImg && headerLogoIcon) {
+    if (logoUrl) {
+      headerLogoImg.src = logoUrl;
+      headerLogoImg.classList.remove('hidden');
+      headerLogoIcon.classList.add('hidden');
+    } else {
+      headerLogoImg.src = '';
+      headerLogoImg.classList.add('hidden');
+      headerLogoIcon.classList.remove('hidden');
+    }
+  }
+}
+
+async function handleShopLogoFileSelect(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  // Maximum 7MB limit strictly enforced for Shop/App Logo
+  const MAX_LOGO_BYTES = 7 * 1024 * 1024;
+  if (file.size > MAX_LOGO_BYTES) {
+    alert('دکان کے لوگو کا سائز 7MB سے زیادہ ہے! براہ کرم زیادہ سے زیادہ 7MB سائز کی تصویر منتخب کریں۔');
+    input.value = '';
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    alert('براہ کرم تصویر (Image File) منتخب فرمائیں۔');
+    input.value = '';
+    return;
+  }
+
+  const selectBtn = document.getElementById('btn-select-shop-logo');
+  const origBtnHtml = selectBtn ? selectBtn.innerHTML : '';
+  if (selectBtn) {
+    selectBtn.disabled = true;
+    selectBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>لوگو اپلوڈ ہو رہا ہے...</span>`;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64Data = e.target.result;
+    try {
+      const res = await adminFetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Data, isLogo: true })
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        updateShopLogoPreviewUI(data.url);
+        applyShopLogo(data.url);
+        alert('دکان کا لوگو کامیابی سے اپلوڈ ہو گیا۔ سیٹنگز محفوظ کرنے پر تمام ویب سائٹ اور ایپ پر لاگو ہو جائے گا۔');
+      } else {
+        alert(data.error || 'لوگو اپلوڈ نہ ہو سکا۔');
+      }
+    } catch (err) {
+      alert('سرور سے رابطہ نہ ہو سکا۔');
+    } finally {
+      if (selectBtn) {
+        selectBtn.disabled = false;
+        selectBtn.innerHTML = origBtnHtml;
+      }
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeShopLogo() {
+  if (confirm('کیا آپ دکان کا لوگو ہٹا کر ڈیفالٹ گندم لوگو بحال کرنا چاہتے ہیں؟')) {
+    updateShopLogoPreviewUI('');
+    applyShopLogo('');
+    const fileInp = document.getElementById('shop-logo-file-input');
+    if (fileInp) fileInp.value = '';
+  }
+}
+
 // 9. Settings
 async function loadAdminSettings() {
   try {
@@ -2882,6 +3039,13 @@ async function loadAdminSettings() {
       // Load active Urdu font selection
       const font = s.urduFont || 'gulzar';
       selectUrduFontCard(font, false);
+
+      // Load active Shop Logo
+      if (document.getElementById('set-shop-logo')) {
+        document.getElementById('set-shop-logo').value = s.shopLogo || '';
+        updateShopLogoPreviewUI(s.shopLogo || '');
+      }
+      applyShopLogo(s.shopLogo || '');
     }
   } catch (err) {
     console.error('Settings load error:', err);
@@ -3177,6 +3341,7 @@ function setupAdminForms() {
     const passVal = document.getElementById('set-password') ? document.getElementById('set-password').value.trim() : '';
     const pinVal = document.getElementById('set-pin') ? document.getElementById('set-pin').value.trim() : '';
 
+    const logoVal = document.getElementById('set-shop-logo') ? document.getElementById('set-shop-logo').value.trim() : '';
     const body = {
       businessName: document.getElementById('set-business-name').value.trim(),
       ownerName: document.getElementById('set-owner-name').value.trim(),
@@ -3187,7 +3352,8 @@ function setupAdminForms() {
       adminUsername: userVal || 'admin',
       adminPassword: passVal,
       adminPin: pinVal,
-      urduFont: document.getElementById('set-urdu-font') ? document.getElementById('set-urdu-font').value : 'noto-sans'
+      urduFont: document.getElementById('set-urdu-font') ? document.getElementById('set-urdu-font').value : 'noto-sans',
+      shopLogo: logoVal
     };
 
     if (submitBtn) {
@@ -3205,6 +3371,7 @@ function setupAdminForms() {
         if (data && data.newToken) {
           sessionStorage.setItem('adminToken', data.newToken);
         }
+        applyShopLogo(body.shopLogo);
         updateAdminWaTestBtn(waVal);
         alertBox.className = "p-4 rounded-2xl bg-emerald-100 text-emerald-950 border-2 border-emerald-400 text-xs md:text-sm font-bold block shadow-sm";
         alertBox.innerHTML = `

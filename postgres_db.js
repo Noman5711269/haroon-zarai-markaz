@@ -101,7 +101,8 @@ class PostgresDB {
           adminUsername: s.admin_username || 'admin',
           adminPassword: s.admin_password || '5711Noman',
           announcement: s.announcement,
-          urduFont: s.urdu_font || 'noto-sans'
+          urduFont: s.urdu_font || 'noto-sans',
+          shopLogo: s.shop_logo || ''
         };
       }
     } catch (err) {
@@ -119,7 +120,8 @@ class PostgresDB {
       adminUsername: "admin",
       adminPassword: "5711Noman",
       announcement: "🌾 خوشخبری: گندم، سفید تل اور سورج مکھی کی بہترین نرخوں پر نقد خریداری جاری ہے! تصدیق شدہ بیج اور معیاری ادویات رعایت پر دستیاب ہیں۔",
-      urduFont: "noto-sans"
+      urduFont: "noto-sans",
+      shopLogo: ""
     };
   }
 
@@ -128,13 +130,14 @@ class PostgresDB {
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_username TEXT DEFAULT 'admin';`);
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_password TEXT DEFAULT '5711Noman';`);
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS urdu_font TEXT DEFAULT 'noto-sans';`);
+      await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS shop_logo TEXT DEFAULT '';`);
     } catch (e) {}
 
     const current = await this.getSettings();
     const updated = { ...current, ...data };
     await this.query(`
-      INSERT INTO settings (id, business_name, business_name_en, tagline, owner_name, phone, whatsapp, address, admin_pin, admin_password, announcement, urdu_font, admin_username, updated_at)
-      VALUES ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+      INSERT INTO settings (id, business_name, business_name_en, tagline, owner_name, phone, whatsapp, address, admin_pin, admin_password, announcement, urdu_font, admin_username, shop_logo, updated_at)
+      VALUES ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
       ON CONFLICT (id) DO UPDATE SET
         business_name = EXCLUDED.business_name,
         business_name_en = EXCLUDED.business_name_en,
@@ -148,6 +151,7 @@ class PostgresDB {
         announcement = EXCLUDED.announcement,
         urdu_font = EXCLUDED.urdu_font,
         admin_username = EXCLUDED.admin_username,
+        shop_logo = EXCLUDED.shop_logo,
         updated_at = NOW()
     `, [
       updated.businessName,
@@ -161,7 +165,8 @@ class PostgresDB {
       updated.adminPassword || '5711Noman',
       updated.announcement,
       updated.urduFont || 'noto-sans',
-      updated.adminUsername || 'admin'
+      updated.adminUsername || 'admin',
+      updated.shopLogo || ''
     ]);
     return this.getSettings();
   }
