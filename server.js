@@ -54,6 +54,7 @@ const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -188,11 +189,21 @@ function serveStatic(req, res, parsedUrl) {
     }
 
     const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    res.writeHead(200, {
+    const basename = path.basename(filePath).toLowerCase();
+    const contentType = (basename === 'manifest.json' || ext === '.webmanifest')
+      ? 'application/manifest+json; charset=utf-8'
+      : (MIME_TYPES[ext] || 'application/octet-stream');
+
+    const headers = {
       'Content-Type': contentType,
-      'Cache-Control': 'no-cache'
-    });
+      'Cache-Control': basename === 'sw.js' ? 'no-cache, no-store, must-revalidate' : 'no-cache'
+    };
+
+    if (basename === 'sw.js') {
+      headers['Service-Worker-Allowed'] = '/';
+    }
+
+    res.writeHead(200, headers);
     res.end(content);
   });
 }

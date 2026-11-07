@@ -74,6 +74,18 @@
   <!-- Phosphor / FontAwesome Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+
+  <!-- Progressive Web App (PWA) Primary Meta Tags & Assets -->
+  <meta name="theme-color" content="#064e3b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ہارون زرعی مرکز">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body class="bg-[#fafcf8] text-gray-800 antialiased selection:bg-agroorange-500 selection:text-white">
 
@@ -262,6 +274,17 @@
           >
             <i class="fa-solid fa-language text-agroorange-600"></i>
             <span id="mobile-lang-btn-label">🌐 اردو + EN</span>
+          </button>
+
+          <!-- PWA Install Button (Shown on mobile & desktop when installable) -->
+          <button 
+            type="button" 
+            onclick="window.triggerPwaInstall && window.triggerPwaInstall()" 
+            class="pwa-install-trigger hidden items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-brand-950 font-black px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs shadow-sm transition hover:scale-105 active:scale-95 cursor-pointer"
+            title="موبائل ایپ انسٹال کریں (Install App)"
+          >
+            <i class="fa-solid fa-download text-brand-900"></i>
+            <span>ایپ انسٹال</span>
           </button>
 
           <a id="whatsapp-header-btn" href="https://wa.me/923007654321" target="_blank" class="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition hover:shadow-lg">
@@ -955,5 +978,7 @@
   </button>
   <script src="/js/i18n.js"></script>
   <script src="/js/app.js"></script>
+  <!-- PWA Service Worker & Install Prompt Manager -->
+  <script src="/js/pwa.js" defer></script>
 </body>
 </html>

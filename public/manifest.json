@@ -1,0 +1,75 @@
+{
+  "name": "ہارون زرعی مرکز - ڈیجیٹل کھاتہ و کسان پورٹل",
+  "short_name": "ہارون زرعی مرکز",
+  "description": "ہارون زرعی مرکز: کسان ڈیجیٹل کھاتہ بک، غلہ منڈی ریٹس اور زرعی ادویات و کھاد گائیڈ",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#064e3b",
+  "background_color": "#064e3b",
+  "lang": "ur",
+  "dir": "rtl",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ڈیجیٹل کسان کھاتہ",
+      "short_name": "کسان کھاتہ",
+      "url": "/khata",
+      "description": "کسان کھاتہ و بقایا چیک کریں",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "منڈی کے ریٹ",
+      "short_name": "منڈی ریٹس",
+      "url": "/mandi",
+      "description": "آج کے تازہ ترین منڈی خرید و فروخت ریٹ",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "زرعی ادویات و کھاد",
+      "short_name": "ادویات",
+      "url": "/adviyaat",
+      "description": "زرعی ادویات و فصلوں کی رہنمائی",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
