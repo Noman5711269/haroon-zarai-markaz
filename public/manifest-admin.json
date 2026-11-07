@@ -1,0 +1,75 @@
+{
+  "name": "ہارون زرعی مرکز - ایڈمن کنٹرول پینل",
+  "short_name": "ایڈمن پینل",
+  "description": "ہارون زرعی مرکز: بااختیار ایڈمن کنٹرول پورٹل، کسان کھاتہ بک انتظام، منڈی ریٹس اور مکمل حساب کتاب",
+  "start_url": "/admin?source=pwa_admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#14532d",
+  "background_color": "#052e16",
+  "lang": "ur",
+  "dir": "rtl",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "کسان کھاتہ جات",
+      "short_name": "کھاتہ جات",
+      "url": "/admin#tab-khata",
+      "description": "کسان کھاتہ جات مینجمنٹ",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "منڈی ریٹس انتظام",
+      "short_name": "منڈی ریٹس",
+      "url": "/admin#tab-mandi-rates",
+      "description": "آج کے ریٹ تبدیل کریں",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "حالیہ اندراجات",
+      "short_name": "حالیہ اینٹریز",
+      "url": "/admin#tab-overview",
+      "description": "کھاتے کے حالیہ اندراجات",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

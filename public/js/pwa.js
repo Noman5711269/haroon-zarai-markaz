@@ -63,6 +63,9 @@
     });
   });
 
+  // Check if running inside Admin portal
+  const isAdmin = window.location.pathname.startsWith('/admin');
+
   // 4. TRIGGER NATIVE INSTALL
   async function triggerInstallPrompt() {
     if (!deferredPrompt) {
@@ -77,7 +80,10 @@
 
     if (choiceResult.outcome === 'accepted') {
       hideInstallBanner();
-      showCelebrationToast('مبارک ہو! ہارون زرعی مرکز ایپ کامیابی سے انسٹال ہو گئی ہے۔');
+      const successMsg = isAdmin
+        ? 'مبارک ہو! ایڈمن کنٹرول پینل ایپ کامیابی سے انسٹال ہو گئی ہے۔'
+        : 'مبارک ہو! ہارون زرعی مرکز ایپ کامیابی سے انسٹال ہو گئی ہے۔';
+      showCelebrationToast(successMsg);
     }
     deferredPrompt = null;
   }
@@ -88,7 +94,10 @@
     hideInstallBanner();
     hideIosModal();
     deferredPrompt = null;
-    showCelebrationToast('مبارک ہو! ہارون زرعی مرکز ایپ آپ کی ہوم اسکرین پر شامل ہو چکی ہے۔');
+    const installedMsg = isAdmin
+      ? 'مبارک ہو! ایڈمن کنٹرول پینل ایپ آپ کی ہوم اسکرین پر شامل ہو چکی ہے۔'
+      : 'مبارک ہو! ہارون زرعی مرکز ایپ آپ کی ہوم اسکرین پر شامل ہو چکی ہے۔';
+    showCelebrationToast(installedMsg);
   });
 
   // 6. DETECT IOS SAFARI (iPhone/iPad)
@@ -110,19 +119,31 @@
     const banner = document.createElement('div');
     banner.id = 'pwa-install-banner';
     banner.dir = 'rtl';
+
+    const borderClass = isAdmin ? 'border-2 border-amber-400' : 'border-2 border-emerald-400';
     banner.className =
-      'fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[9990] bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border-2 border-emerald-400 transition-all duration-300 transform translate-y-8 opacity-0 flex flex-col gap-3 font-sans text-right';
+      `fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[9990] bg-white rounded-3xl p-4 sm:p-5 shadow-2xl ${borderClass} transition-all duration-300 transform translate-y-8 opacity-0 flex flex-col gap-3 font-sans text-right`;
+
+    const appTitle = isAdmin ? 'ایڈمن کنٹرول پینل ایپ' : 'ہارون زرعی مرکز موبائل ایپ';
+    const appDesc = isAdmin
+      ? 'ایڈمن پورٹل کو براہ راست موبائل یا کمپیوٹر پر بغیر براؤزر کے الگ فل اسکرین ایپ کی طرح انسٹال کریں!'
+      : 'فاسٹ موبائل ایپ انسٹال کریں اور انٹرنیٹ کے بغیر بھی کھاتہ و ریٹ چیک کریں!';
+    const appBtnText = isAdmin ? 'ایڈمن ایپ انسٹال کریں (Install Admin App)' : 'ابھی انسٹال کریں (Install App)';
+    const btnGradient = isAdmin
+      ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-gray-950 font-black'
+      : 'bg-gradient-to-r from-emerald-600 to-brand-700 hover:from-emerald-700 hover:to-brand-800 text-white font-extrabold';
+    const badgeColor = isAdmin ? 'bg-amber-500' : 'bg-emerald-500';
 
     banner.innerHTML = `
       <div class="flex items-center gap-3">
         <img src="/icons/icon-192.png" alt="HZM Logo" class="w-13 h-13 rounded-2xl shadow-md border-2 border-amber-300 shrink-0">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h4 class="font-black text-gray-900 text-sm sm:text-base font-urdu">ہارون زرعی مرکز موبائل ایپ</h4>
+            <span class="w-2 h-2 rounded-full ${badgeColor} animate-pulse"></span>
+            <h4 class="font-black text-gray-900 text-sm sm:text-base font-urdu">${appTitle}</h4>
           </div>
           <p class="text-[11px] sm:text-xs text-gray-600 mt-0.5 leading-snug">
-            فاسٹ موبائل ایپ انسٹال کریں اور انٹرنیٹ کے بغیر بھی کھاتہ و ریٹ چیک کریں!
+            ${appDesc}
           </p>
         </div>
         <button type="button" id="pwa-dismiss-btn" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition cursor-pointer" title="بند کریں">
@@ -131,9 +152,9 @@
       </div>
 
       <div class="flex items-center gap-2 pt-1">
-        <button type="button" id="pwa-confirm-install-btn" class="flex-1 bg-gradient-to-r from-emerald-600 to-brand-700 hover:from-emerald-700 hover:to-brand-800 text-white font-extrabold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
-          <i class="fa-solid fa-download text-amber-300"></i>
-          <span>ابھی انسٹال کریں (Install App)</span>
+        <button type="button" id="pwa-confirm-install-btn" class="flex-1 ${btnGradient} text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-download ${isAdmin ? 'text-brand-950' : 'text-amber-300'}"></i>
+          <span>${appBtnText}</span>
         </button>
         <button type="button" id="pwa-later-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer">
           بعد میں
@@ -175,19 +196,23 @@
     const banner = document.createElement('div');
     banner.id = 'pwa-ios-banner';
     banner.dir = 'rtl';
+    const borderClass = isAdmin ? 'border-2 border-amber-400' : 'border-2 border-emerald-400';
     banner.className =
-      'fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[9990] bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border-2 border-emerald-400 transition-all duration-300 transform translate-y-8 opacity-0 flex flex-col gap-2.5 font-sans text-right';
+      `fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[9990] bg-white rounded-3xl p-4 sm:p-5 shadow-2xl ${borderClass} transition-all duration-300 transform translate-y-8 opacity-0 flex flex-col gap-2.5 font-sans text-right`;
+
+    const iosTitle = isAdmin ? 'آئی فون پر ایڈمن ایپ انسٹال کریں' : 'آئی فون پر ایپ انسٹال کریں';
+    const iosBadge = isAdmin ? 'Admin Safari Guide' : 'Safari Browser Guide';
 
     banner.innerHTML = `
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <img src="/icons/apple-touch-icon.png" alt="HZM" class="w-10 h-10 rounded-xl shadow-xs border border-amber-300">
           <div>
-            <h4 class="font-black text-gray-900 text-sm font-urdu">آئی فون پر ایپ انسٹال کریں</h4>
-            <span class="text-[10px] text-emerald-700 font-bold">Safari Browser Guide</span>
+            <h4 class="font-black text-gray-900 text-sm font-urdu">${iosTitle}</h4>
+            <span class="text-[10px] text-emerald-700 font-bold">${iosBadge}</span>
           </div>
         </div>
-        <button type="button" id="pwa-ios-close-btn" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer">
+        <button type="button" id="pwa-ios-close-btn" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition cursor-pointer" title="بند کریں">
           <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
@@ -227,7 +252,10 @@
     if (isIos) {
       showIosBanner();
     } else {
-      showCelebrationToast('ایپ انسٹال کرنے کے لیے براؤزر کے مینو (3 ڈاٹس) میں "Install App" یا "Add to Home Screen" منتخب کریں۔');
+      const manualMsg = isAdmin
+        ? 'ایڈمن ایپ انسٹال کرنے کے لیے براؤزر کے مینو (3 ڈاٹس) میں "Install App" یا "Add to Home Screen" منتخب کریں۔'
+        : 'ایپ انسٹال کرنے کے لیے براؤزر کے مینو (3 ڈاٹس) میں "Install App" یا "Add to Home Screen" منتخب کریں۔';
+      showCelebrationToast(manualMsg);
     }
   }
 

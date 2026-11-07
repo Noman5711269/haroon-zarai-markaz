@@ -51,12 +51,12 @@
   <link rel="stylesheet" href="/css/styles.css">
 
   <!-- Progressive Web App (PWA) Primary Meta Tags & Assets -->
-  <meta name="theme-color" content="#064e3b">
+  <meta name="theme-color" content="#14532d">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ہارون زرعی مرکز">
-  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-title" content="ایڈمن پینل">
+  <link rel="manifest" href="/manifest-admin.json">
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
@@ -143,6 +143,20 @@
         <p class="text-[10px] text-gray-500 mt-1">Windows Hello، فنگر پرنٹ یا ہوم اسکرین لاک سپورٹ</p>
       </div>
 
+      <!-- Install Admin App Button (Login Screen) -->
+      <div class="mt-3 pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          onclick="window.triggerPwaInstall && window.triggerPwaInstall()"
+          class="pwa-install-trigger w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-700 to-brand-800 hover:from-emerald-700 hover:to-teal-900 text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+          title="ایڈمن پورٹل کو بطور ایپ انسٹال کریں"
+        >
+          <i class="fa-solid fa-download text-amber-300"></i>
+          <span>ایڈمن ایپ انسٹال کریں (Install Admin App)</span>
+        </button>
+        <p class="text-[10px] text-gray-400 mt-1">بغیر براؤزر موبائل یا کمپیوٹر پر ایپ کی طرح چلائیں</p>
+      </div>
+
       <!-- General Login Error Box -->
       <div id="login-error" class="hidden mt-3 p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200 text-center"></div>
 
@@ -189,6 +203,17 @@
                 <option value="vazirmatn" class="text-gray-900 font-vazirmatn">5. Vazirmatn (ٹیک اسٹائل)</option>
               </select>
             </div>
+
+            <!-- Install Admin App Button in Header -->
+            <button 
+              type="button" 
+              onclick="window.triggerPwaInstall && window.triggerPwaInstall()" 
+              class="pwa-install-trigger flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-brand-950 font-black px-3 py-1.5 rounded-xl text-xs shadow-md transition hover:scale-105 active:scale-95 cursor-pointer" 
+              title="ایڈمن پورٹل کو بطور ایپ انسٹال کریں"
+            >
+              <i class="fa-solid fa-download text-brand-900 text-xs"></i>
+              <span>ایڈمن ایپ انسٹال</span>
+            </button>
 
             <button onclick="openAddProductModal()" class="bg-gradient-to-r from-agroorange-500 to-amber-500 hover:from-agroorange-600 hover:to-amber-600 text-white text-xs sm:text-sm font-black px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-agroorange-900/30 transition hover:scale-105 cursor-pointer">
               <i class="fa-solid fa-plus-circle text-sm text-yellow-200"></i>

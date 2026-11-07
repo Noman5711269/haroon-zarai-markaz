@@ -1,18 +1,22 @@
-// Haroon Zarai Markaz PWA Service Worker (v1.0.0)
-const CACHE_NAME = 'hzm-pwa-v1.0.0';
+// Haroon Zarai Markaz PWA Service Worker (v1.1.0)
+const CACHE_NAME = 'hzm-pwa-v1.1.0';
 
 // Core static assets to pre-cache for instant loading & basic offline capability
 const CORE_ASSETS = [
   '/',
   '/index.html',
+  '/admin',
+  '/admin.html',
   '/khata',
   '/adviyaat',
   '/mandi',
   '/css/styles.css',
   '/js/app.js',
+  '/js/admin.js',
   '/js/i18n.js',
   '/js/pwa.js',
   '/manifest.json',
+  '/manifest-admin.json',
   '/favicon.ico',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -36,11 +40,6 @@ function shouldBypassCache(url) {
 
   // 2. Application Backend API endpoints (Live Khata, DB transactions, login, etc.)
   if (pathname.startsWith('/api/')) {
-    return true;
-  }
-
-  // 3. Admin portal sensitive operations
-  if (pathname.startsWith('/admin')) {
     return true;
   }
 
