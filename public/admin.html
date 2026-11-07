@@ -2781,7 +2781,7 @@
   </div>
 
   <!-- MODAL: TRANSACTION PROOF SLIP VIEWER -->
-  <div id="modal-proof-viewer" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+  <div id="modal-proof-viewer" onclick="if(event.target === this) closeProofViewer()" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-white rounded-3xl shadow-2xl border-2 border-brand-200 max-w-xl w-full p-5 max-h-[95vh] flex flex-col relative text-right" dir="rtl">
       <button onclick="closeProofViewer()" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-agroyellow-100 hover:bg-agroyellow-200 flex items-center justify-center text-gray-600 transition z-10 cursor-pointer">
         <i class="fa-solid fa-xmark text-base"></i>
@@ -2798,15 +2798,25 @@
       </div>
 
       <!-- High-res Image Preview -->
-      <div class="my-4 flex-1 overflow-auto rounded-2xl bg-gray-50 border-2 border-agroorange-200 p-2 flex items-center justify-center min-h-[250px] max-h-[60vh]">
+      <div class="my-4 flex-1 overflow-auto rounded-2xl bg-gray-50 border-2 border-agroorange-200 p-2 flex items-center justify-center min-h-[250px] max-h-[60vh] relative">
+        <div id="proof-viewer-spinner" class="hidden absolute inset-0 bg-white/85 rounded-xl flex flex-col items-center justify-center gap-2 z-10">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-agroorange-600"></i>
+          <span class="text-xs font-bold text-gray-600">رسید لوڈ ہو رہی ہے...</span>
+        </div>
+        <div id="proof-viewer-error" class="hidden text-center p-4 text-xs font-bold text-rose-600"></div>
         <img id="proof-viewer-img" src="" alt="Proof Image" class="max-w-full max-h-full object-contain rounded-xl shadow-md">
       </div>
 
       <!-- Footer Buttons -->
       <div class="pt-3 border-t border-agroorange-100 flex items-center justify-between">
-        <a id="proof-viewer-download" href="" target="_blank" download="proof-slip.jpg" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-download"></i> تصویر ڈاؤنلوڈ کریں
-        </a>
+        <div class="flex items-center gap-2">
+          <a id="proof-viewer-download" href="" target="_blank" download="proof-slip.jpg" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-download"></i> تصویر ڈاؤنلوڈ کریں
+          </a>
+          <button type="button" onclick="openProofInNewWindow()" title="بڑی اسکرین پر کھولیں" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 transition cursor-pointer">
+            <i class="fa-solid fa-up-right-from-square"></i> بڑی اسکرین
+          </button>
+        </div>
         <button type="button" onclick="closeProofViewer()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-5 py-2 rounded-xl text-xs transition cursor-pointer">
           بند کریں (Close)
         </button>

@@ -758,7 +758,7 @@ function renderLedgerTransactionsRows(transactions) {
         </td>
         <td class="p-3 text-center whitespace-nowrap">
           ${tx.proofImage ? `
-            <button type="button" onclick="openProofViewer('${tx.proofImage}', '${tx.id}', '${(tx.productName || tx.description || 'رسید ثبوت').replace(/'/g, "\\'")}')" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-xs transition cursor-pointer">
+            <button type="button" onclick="viewTransactionProof('${tx.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-xs transition cursor-pointer">
               <i class="fa-solid fa-file-invoice text-brand-600"></i> رسید دیکھیں
             </button>
           ` : '<span class="text-gray-300">-</span>'}
@@ -1173,6 +1173,20 @@ function handleQuickTxProofFile(input) {
         previewImg.src = compressedData;
         hiddenInp.value = compressedData;
         previewBox.classList.remove('hidden');
+
+        // Asynchronously save to cloud DB / server uploads for a clean permanent URL
+        adminFetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: compressedData })
+        }).then(res => res.json()).then(data => {
+          if (data && data.url) {
+            hiddenInp.value = data.url;
+            console.log('Quick tx proof uploaded to permanent storage:', data.url);
+          }
+        }).catch(err => {
+          console.warn('Background proof upload error, base64 retained:', err);
+        });
       }
     };
     img.src = rawData;
@@ -1634,6 +1648,20 @@ function handleTxProofFile(input) {
         previewImg.src = compressedData;
         hiddenInp.value = compressedData;
         previewBox.classList.remove('hidden');
+
+        // Asynchronously save to cloud DB / server uploads for a clean permanent URL
+        adminFetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: compressedData })
+        }).then(res => res.json()).then(data => {
+          if (data && data.url) {
+            hiddenInp.value = data.url;
+            console.log('Quick tx proof uploaded to permanent storage:', data.url);
+          }
+        }).catch(err => {
+          console.warn('Background proof upload error, base64 retained:', err);
+        });
       }
     };
     img.src = rawData;
@@ -1653,25 +1681,120 @@ function removeTxProofPhoto() {
   if (fileInp) fileInp.value = '';
 }
 
+let currentProofUrl = '';
+
+function viewTransactionProof(txId) {
+  if (!txId) return;
+  let tx = null;
+  if (Array.isArray(activeFarmerTransactionsCache)) {
+    tx = activeFarmerTransactionsCache.find(t => String(t.id) === String(txId));
+  }
+  if (!tx && Array.isArray(allRecentTransactionsCache)) {
+    tx = allRecentTransactionsCache.find(t => String(t.id) === String(txId));
+  }
+  if (!tx && Array.isArray(allFarmersCache)) {
+    for (const f of allFarmersCache) {
+      if (Array.isArray(f.transactions)) {
+        const found = f.transactions.find(t => String(t.id) === String(txId));
+        if (found) { tx = found; break; }
+      }
+    }
+  }
+  if (!tx || (!tx.proofImage && !tx.receiptImage)) {
+    showToast('اس اندراج کے ساتھ کوئی تصویری رسید منسلک نہیں ہے', 'info');
+    return;
+  }
+  const imgUrl = tx.proofImage || tx.receiptImage;
+  const title = tx.productName || tx.description || 'رسید ثبوت';
+  openProofViewer(imgUrl, tx.id, title);
+}
+
 function openProofViewer(url, txId, title) {
   if (!url) return;
+  currentProofUrl = url;
   const modal = document.getElementById('modal-proof-viewer');
   const img = document.getElementById('proof-viewer-img');
   const titleElem = document.getElementById('proof-viewer-title');
   const subElem = document.getElementById('proof-viewer-subtitle');
   const dlBtn = document.getElementById('proof-viewer-download');
+  const spinner = document.getElementById('proof-viewer-spinner');
+  const errElem = document.getElementById('proof-viewer-error');
 
-  if (img) img.src = url;
   if (titleElem) titleElem.innerText = title ? `رسید / ثبوت: ${title}` : 'رسید / پرچی کا تصویری ثبوت';
   if (subElem) subElem.innerText = txId ? `اندراج نمبر: ${txId} • تصدیق شدہ اصل واؤچر` : 'کھاتے کے اس اندراج کے لیے منسلک شدہ باضابطہ ثبوت';
-  if (dlBtn) dlBtn.href = url;
+  if (dlBtn) {
+    dlBtn.href = url;
+    dlBtn.setAttribute('download', `receipt-${txId || 'proof'}.jpg`);
+  }
+
+  if (spinner) spinner.classList.remove('hidden');
+  if (errElem) {
+    errElem.classList.add('hidden');
+    errElem.innerHTML = '';
+  }
+
+  if (img) {
+    img.style.display = 'none';
+    img.onload = () => {
+      if (spinner) spinner.classList.add('hidden');
+      img.style.display = 'block';
+    };
+    img.onerror = () => {
+      if (spinner) spinner.classList.add('hidden');
+      img.style.display = 'none';
+      if (errElem) {
+        errElem.classList.remove('hidden');
+        errElem.innerHTML = `
+          <div class="py-6 flex flex-col items-center justify-center text-rose-600 gap-2 font-urdu">
+            <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+            <p class="font-bold text-sm">رسید کی تصویر لوڈ نہیں ہو سکی۔</p>
+            <p class="text-xs text-gray-500">فائل کلاؤڈ پر تلاش کی جا رہی ہے یا انٹرنیٹ سست ہے۔ براہ کرم "بڑی اسکرین" پر کلک کر کے دیکھیں۔</p>
+          </div>
+        `;
+      }
+    };
+    img.src = url;
+  }
 
   if (modal) modal.classList.remove('hidden');
+}
+
+function openProofInNewWindow() {
+  if (!currentProofUrl) return;
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(`<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>رسید ثبوت - ہارون زرعی مرکز</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin:0; padding:20px; background:#111827; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; color:white; }
+    img { max-width:96vw; max-height:85vh; object-fit:contain; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); background:#fff; }
+    .bar { margin-bottom:14px; display:flex; gap:12px; }
+    a, button { background:#16a34a; color:#fff; text-decoration:none; padding:10px 18px; border-radius:10px; font-weight:bold; font-size:14px; border:none; cursor:pointer; }
+    a:hover, button:hover { background:#15803d; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <a href="${currentProofUrl}" download="receipt.jpg">ڈاؤنلوڈ کریں</a>
+    <button onclick="window.print()">پرنٹ کریں</button>
+  </div>
+  <img src="${currentProofUrl}" alt="رسید واؤچر">
+</body>
+</html>`);
+    w.document.close();
+  }
 }
 
 function closeProofViewer() {
   const modal = document.getElementById('modal-proof-viewer');
   if (modal) modal.classList.add('hidden');
+  const img = document.getElementById('proof-viewer-img');
+  if (img) img.src = '';
+  currentProofUrl = '';
 }
 
 // ==========================================
@@ -1721,7 +1844,7 @@ async function loadRecentTransactions() {
           </td>
           <td class="p-3 text-center whitespace-nowrap">
             ${tx.proofImage ? `
-              <button type="button" onclick="openProofViewer('${tx.proofImage}', '${tx.id}', '${(prodName).replace(/'/g, "\\'")}')" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-xs transition cursor-pointer">
+              <button type="button" onclick="viewTransactionProof('${tx.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-xs transition cursor-pointer">
                 <i class="fa-solid fa-file-invoice text-brand-600"></i> رسید
               </button>
             ` : '<span class="text-gray-300">-</span>'}

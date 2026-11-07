@@ -573,8 +573,8 @@ function renderCustomerTransactionsRows(txList, isFiltered = false) {
         </td>
         <td class="p-3.5 whitespace-nowrap text-center">
           ${proofImg ? `
-            <button type="button" onclick="openProofModal('${proofImg.replace(/'/g, "\\'")}', '${(prodName || '').replace(/'/g, "\\'")}', '${tx.date || ''}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-300 font-extrabold px-2.5 py-1.5 rounded-xl text-xs inline-flex items-center gap-1.5 transition shadow-2xs cursor-pointer">
-              <i class="fa-solid fa-image text-indigo-600"></i>
+            <button type="button" onclick="viewCustomerTxProof('${tx.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-300 font-extrabold px-2.5 py-1.5 rounded-xl text-xs inline-flex items-center gap-1.5 transition shadow-2xs cursor-pointer">
+              <i class="fa-solid fa-file-invoice text-indigo-600"></i>
               <span>رسید دیکھیں</span>
             </button>
           ` : `<span class="text-gray-300 font-mono text-xs">-</span>`}
@@ -1906,8 +1906,28 @@ async function submitGoogleAuth(e) {
   }
 }
 
+// View Customer Transaction Proof
+function viewCustomerTxProof(txId) {
+  if (!txId) return;
+  let tx = null;
+  if (currentLoadedFarmer && Array.isArray(currentLoadedFarmer.transactions)) {
+    tx = currentLoadedFarmer.transactions.find(t => String(t.id) === String(txId));
+  }
+  if (!tx || (!tx.proofImage && !tx.receiptImage)) {
+    if (typeof showToast === 'function') {
+      showToast('اس اندراج کے ساتھ کوئی تصویری رسید منسلک نہیں ہے', 'info');
+    } else {
+      alert('اس اندراج کے ساتھ کوئی تصویری رسید منسلک نہیں ہے');
+    }
+    return;
+  }
+  const imgUrl = tx.proofImage || tx.receiptImage;
+  const prodName = tx.productName || tx.description || 'رسید ثبوت';
+  openProofModal(imgUrl, prodName, tx.date, tx.id);
+}
+
 // Proof Slip Lightbox Modal for Farmers
-function openProofModal(imageUrl, title, date) {
+function openProofModal(imageUrl, title, date, txId) {
   const modal = document.getElementById('modal-proof-viewer');
   if (!modal) return;
 
@@ -1915,11 +1935,39 @@ function openProofModal(imageUrl, title, date) {
   const titleElem = document.getElementById('proof-modal-title');
   const subtitleElem = document.getElementById('proof-modal-subtitle');
   const downloadLink = document.getElementById('proof-modal-download');
+  const spinner = document.getElementById('proof-modal-spinner');
+  const errorElem = document.getElementById('proof-modal-error');
 
-  if (img) img.src = imageUrl;
   if (titleElem) titleElem.innerText = title ? `رسید / ثبوت: ${title}` : 'رسید / پرچی کا تصویری ثبوت';
-  if (subtitleElem) subtitleElem.innerText = date ? `تاریخ اندراج: ${date} | باضابطہ تصدیقی ریکارڈ` : 'کھاتے کے اس اندراج کے لیے باضابطہ منسلک شدہ ثبوت';
-  if (downloadLink) downloadLink.href = imageUrl;
+  if (subtitleElem) subtitleElem.innerText = (txId ? `اندراج نمبر: ${txId} • ` : '') + (date ? `تاریخ: ${date}` : 'باضابطہ تصدیقی ریکارڈ');
+
+  if (spinner) spinner.classList.remove('hidden');
+  if (errorElem) {
+    errorElem.classList.add('hidden');
+    errorElem.innerHTML = '';
+  }
+
+  if (img) {
+    img.style.display = 'none';
+    img.onload = () => {
+      if (spinner) spinner.classList.add('hidden');
+      img.style.display = 'block';
+    };
+    img.onerror = () => {
+      if (spinner) spinner.classList.add('hidden');
+      img.style.display = 'none';
+      if (errorElem) {
+        errorElem.classList.remove('hidden');
+        errorElem.innerHTML = '<div class="p-4 text-center font-urdu"><i class="fa-solid fa-triangle-exclamation text-rose-500 text-2xl mb-1 block"></i><p class="text-rose-600 font-bold">تصویر لوڈ نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔</p></div>';
+      }
+    };
+    img.src = imageUrl;
+  }
+
+  if (downloadLink) {
+    downloadLink.href = imageUrl;
+    downloadLink.setAttribute('download', `receipt-${txId || 'proof'}.jpg`);
+  }
 
   modal.classList.remove('hidden');
   document.body.classList.add('overflow-hidden');
@@ -1928,6 +1976,8 @@ function openProofModal(imageUrl, title, date) {
 function closeProofModal() {
   const modal = document.getElementById('modal-proof-viewer');
   if (modal) modal.classList.add('hidden');
+  const img = document.getElementById('proof-modal-img');
+  if (img) img.src = '';
   document.body.classList.remove('overflow-hidden');
 }
 

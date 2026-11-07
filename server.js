@@ -169,8 +169,9 @@ function serveStatic(req, res, parsedUrl) {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       if (err.code === 'ENOENT') {
-        // SPA fallback or 404
-        if (!pathname.startsWith('/api')) {
+        // SPA fallback only for HTML page routes (never for assets or uploads)
+        const isAsset = /\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot|map|json)$/i.test(pathname) || pathname.startsWith('/uploads/');
+        if (!pathname.startsWith('/api') && !isAsset) {
           const indexHtml = path.join(PUBLIC_DIR, 'index.html');
           if (fs.existsSync(indexHtml)) {
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -211,6 +212,54 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const method = req.method;
+
+  // Permanent Uploaded Receipts & Images Server with Cloud Fallback (Preserves files across Render restarts)
+  if (pathname.startsWith('/uploads/') && method === 'GET') {
+    const filename = path.basename(pathname);
+    const localPath = path.join(PUBLIC_DIR, 'uploads', filename);
+
+    // 1. If exists on local disk, stream immediately
+    if (fs.existsSync(localPath)) {
+      const ext = path.extname(filename).toLowerCase();
+      const contentType = MIME_TYPES[ext] || 'image/jpeg';
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400'
+      });
+      return fs.createReadStream(localPath).pipe(res);
+    }
+
+    // 2. If missing on disk (e.g. after Render restart/redeploy), fetch from Supabase
+    try {
+      let fileRecord = null;
+      if (typeof db.getUploadedFile === 'function') {
+        fileRecord = await db.getUploadedFile(filename);
+      }
+      if (!fileRecord && typeof localDb.getUploadedFile === 'function') {
+        fileRecord = localDb.getUploadedFile(filename);
+      }
+
+      if (fileRecord && fileRecord.data) {
+        const buf = Buffer.from(fileRecord.data, 'base64');
+        try {
+          const uploadsDir = path.join(PUBLIC_DIR, 'uploads');
+          if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+          fs.writeFileSync(localPath, buf);
+        } catch (e) {}
+
+        res.writeHead(200, {
+          'Content-Type': fileRecord.mimeType || 'image/jpeg',
+          'Cache-Control': 'public, max-age=86400'
+        });
+        return res.end(buf);
+      }
+    } catch (dbErr) {
+      console.warn('Failed to load image from database:', dbErr.message);
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('Image Not Found');
+  }
 
   // API Routes
   if (pathname.startsWith('/api/')) {
@@ -384,12 +433,27 @@ const server = http.createServer(async (req, res) => {
             base64Data = match[2];
           }
 
-          const filename = `prod_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
+          const filename = `proof_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
           const filePath = path.join(uploadsDir, filename);
           const buffer = Buffer.from(base64Data, 'base64');
           fs.writeFileSync(filePath, buffer);
 
-          console.log(`📸 Image saved: /uploads/${filename} (${buffer.length} bytes)`);
+          // Persist to Cloud Database (Supabase) and localDb
+          const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+          try {
+            if (typeof db.saveUploadedFile === 'function') {
+              await db.saveUploadedFile(filename, mimeType, base64Data);
+            }
+          } catch (e) {
+            console.warn('saveUploadedFile to db error:', e.message);
+          }
+          try {
+            if (db !== localDb && typeof localDb.saveUploadedFile === 'function') {
+              localDb.saveUploadedFile(filename, mimeType, base64Data);
+            }
+          } catch (e) {}
+
+          console.log(`📸 Image saved: /uploads/${filename} (${buffer.length} bytes) to disk & cloud DB`);
           return sendJson(res, 200, {
             success: true,
             url: `/uploads/${filename}`

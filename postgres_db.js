@@ -1916,6 +1916,57 @@ class PostgresDB {
       return localDb.getDailyReport(dateStr);
     }
   }
+
+  // --- 15. Permanent Uploaded Receipts & Images Storage ---
+  async ensureUploadedFilesTable() {
+    if (this._ensuredUploadedFilesTable) return;
+    try {
+      await this.query(`
+        CREATE TABLE IF NOT EXISTS uploaded_files (
+          id TEXT PRIMARY KEY,
+          mime_type TEXT,
+          data TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      this._ensuredUploadedFilesTable = true;
+    } catch (e) {
+      console.warn('ensureUploadedFilesTable notice:', e.message);
+    }
+  }
+
+  async saveUploadedFile(filename, mimeType, base64Data) {
+    try {
+      await this.ensureUploadedFilesTable();
+      await this.query(`
+        INSERT INTO uploaded_files (id, mime_type, data)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, mime_type = EXCLUDED.mime_type
+      `, [filename, mimeType || 'image/jpeg', base64Data]);
+      return true;
+    } catch (e) {
+      console.warn('saveUploadedFile error:', e.message);
+      return false;
+    }
+  }
+
+  async getUploadedFile(filename) {
+    try {
+      await this.ensureUploadedFilesTable();
+      const res = await this.query('SELECT mime_type, data FROM uploaded_files WHERE id = $1', [filename]);
+      if (res.rows.length > 0) {
+        return {
+          filename,
+          mimeType: res.rows[0].mime_type || 'image/jpeg',
+          data: res.rows[0].data
+        };
+      }
+      return null;
+    } catch (e) {
+      console.warn('getUploadedFile error:', e.message);
+      return null;
+    }
+  }
 }
 
 module.exports = PostgresDB;

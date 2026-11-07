@@ -1567,6 +1567,35 @@ class Database {
       recentBills: sales.slice(0, 20)
     };
   }
+
+  // --- 15. Permanent Uploaded Receipts & Images Storage ---
+  saveUploadedFile(filename, mimeType, base64Data) {
+    try {
+      const db = this.read();
+      if (!db.uploadedFiles) db.uploadedFiles = {};
+      db.uploadedFiles[filename] = { mimeType: mimeType || 'image/jpeg', data: base64Data };
+      this.write(db);
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  getUploadedFile(filename) {
+    try {
+      const db = this.read();
+      if (db.uploadedFiles && db.uploadedFiles[filename]) {
+        return {
+          filename,
+          mimeType: db.uploadedFiles[filename].mimeType || 'image/jpeg',
+          data: db.uploadedFiles[filename].data
+        };
+      }
+      return null;
+    } catch(e) {
+      return null;
+    }
+  }
 }
 
 module.exports = new Database();

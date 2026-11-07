@@ -636,21 +636,37 @@
   <!-- MODALS (Image Proof, Complaint, Google Auth, Forgot Password) -->
   
   <!-- 1. Proof Viewer Modal -->
-  <div id="modal-proof-viewer" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3">
-    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative" dir="rtl">
-      <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-        <h4 class="font-black text-gray-900 text-sm font-urdu flex items-center gap-2">
-          <i class="fa-solid fa-file-invoice text-emerald-600"></i> <span id="proof-modal-title">کھاتے کی رسید کا ثبوت</span>
-        </h4>
-        <button type="button" onclick="closeProofModal()" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center cursor-pointer">
+  <div id="modal-proof-viewer" onclick="if(event.target === this) closeProofModal()" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative text-right flex flex-col max-h-[92vh]" dir="rtl">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-emerald-50/60">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold shadow-xs">
+            <i class="fa-solid fa-file-invoice"></i>
+          </div>
+          <div>
+            <h4 class="font-black text-gray-900 text-sm font-urdu" id="proof-modal-title">کھاتے کی رسید کا ثبوت</h4>
+            <p class="text-[11px] text-gray-500 font-mono" id="proof-modal-subtitle">باضابطہ تصدیقی ریکارڈ</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeProofModal()" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center cursor-pointer transition">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="p-4 flex items-center justify-center bg-gray-900/5 max-h-[70vh] overflow-auto">
-        <img id="proof-modal-img" src="" alt="Proof Receipt" class="max-w-full max-h-[65vh] rounded-xl object-contain shadow-md">
+      <div class="p-3 sm:p-4 flex-1 flex items-center justify-center bg-gray-900/5 min-h-[240px] max-h-[65vh] overflow-auto relative">
+        <div id="proof-modal-spinner" class="hidden absolute inset-0 bg-white/80 rounded-xl flex flex-col items-center justify-center gap-2 z-10">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-600"></i>
+          <span class="text-xs font-bold text-gray-600 font-urdu">رسید لوڈ ہو رہی ہے...</span>
+        </div>
+        <div id="proof-modal-error" class="hidden text-center p-4 text-xs font-bold text-rose-600"></div>
+        <img id="proof-modal-img" src="" alt="Proof Receipt" class="max-w-full max-h-[60vh] rounded-xl object-contain shadow-md">
       </div>
-      <div class="p-3 border-t border-gray-100 text-center bg-gray-50 text-xs text-gray-500">
-        ہارون زرعی مرکز • پل 88، شادی خان منڈا
+      <div class="p-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 text-xs text-gray-600">
+        <a id="proof-modal-download" href="" target="_blank" download="receipt.jpg" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs inline-flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-download"></i> ڈاؤنلوڈ کریں
+        </a>
+        <button type="button" onclick="closeProofModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-4 py-1.5 rounded-xl text-xs transition cursor-pointer">
+          بند کریں
+        </button>
       </div>
     </div>
   </div>

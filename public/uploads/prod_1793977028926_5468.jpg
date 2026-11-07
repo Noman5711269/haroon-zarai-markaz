@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ہارون زرعی مرکز | Haroon Zarai Markaz - غلہ منڈی، بیج، کھاد و زرعی ادویات</title>
+  <meta name="description" content="ہارون زرعی مرکز: گندم، چاول، سفید تل، سورج مکھی اور دیگر اجناس کی نقد خرید و فروخت، تصدیق شدہ بیج، زرعی ادویات اور کسان آن لائن کھاتہ پورٹل">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+              950: '#052e16',
+            },
+            agroyellow: {
+              50: '#fefce8',
+              100: '#fef9c3',
+              200: '#fef08a',
+              300: '#fde047',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04',
+            },
+            agroorange: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Instant check for logged-in session to prevent any login flicker -->
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('hzm_farmer_session')) {
+          document.documentElement.classList.add('farmer-logged-in');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <style>
+    html.farmer-logged-in #modal-farmer-gateway,
+    html.farmer-logged-in .visitor-login-only {
+      display: none !important;
+    }
+    html.farmer-logged-in .logged-in-only {
+      display: inline-flex !important;
+    }
+  </style>
+
+  <!-- Phosphor / FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-[#fafcf8] text-gray-800 antialiased selection:bg-agroorange-500 selection:text-white">
+
+  <!-- ==================== 5-SECOND MOTION INTRO SPLASH SCREEN (ہارون زرعی مرکز موشن انٹرو) ==================== -->
+  <div id="motion-intro-splash" dir="rtl" class="text-white select-none">
+    <!-- Ambient Animated Agriculture Background Aura & Particles -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+      <div class="motion-bg-particle text-amber-300 text-2xl" style="left: 12%; animation-duration: 6s; animation-delay: 0s;"><i class="fa-solid fa-wheat-awn"></i></div>
+      <div class="motion-bg-particle text-emerald-300 text-xl" style="left: 28%; animation-duration: 7s; animation-delay: 1.2s;"><i class="fa-solid fa-seedling"></i></div>
+      <div class="motion-bg-particle text-yellow-300 text-3xl" style="left: 68%; animation-duration: 5.5s; animation-delay: 0.5s;"><i class="fa-solid fa-wheat-awn"></i></div>
+      <div class="motion-bg-particle text-amber-400 text-xl" style="left: 84%; animation-duration: 6.5s; animation-delay: 2s;"><i class="fa-solid fa-leaf"></i></div>
+      <div class="motion-bg-particle text-emerald-400 text-2xl" style="left: 48%; animation-duration: 8s; animation-delay: 0.2s;"><i class="fa-solid fa-wheat-awn"></i></div>
+    </div>
+
+    <!-- Center Motion Content -->
+    <div class="relative z-10 flex flex-col items-center justify-center text-center px-4 max-w-lg mx-auto">
+      
+      <!-- Motion Logo Box with Glowing Rings -->
+      <div class="relative w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center mb-6">
+        <!-- Outer Glowing Rotating Dashed Ring -->
+        <div class="absolute inset-0 rounded-full border-2 border-dashed border-amber-400/50 motion-halo-ring"></div>
+        <!-- Inner Counter-Rotating Ring -->
+        <div class="absolute inset-2 rounded-full border border-emerald-400/40 motion-counter-ring"></div>
+        <!-- Ambient Glowing Aura -->
+        <div class="absolute inset-4 rounded-full bg-gradient-to-tr from-emerald-500/25 via-amber-400/25 to-brand-400/35 blur-xl"></div>
+        
+        <!-- Main Animated Shop Logo Emblem -->
+        <div class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-emerald-700 via-emerald-600 to-amber-500 p-1 shadow-2xl motion-logo-box flex items-center justify-center border-2 border-amber-300/80">
+          <div class="w-full h-full rounded-[22px] bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 flex flex-col items-center justify-center relative overflow-hidden">
+            <i class="fa-solid fa-wheat-awn text-5xl sm:text-6xl text-amber-400 drop-shadow-[0_4px_16px_rgba(251,191,36,0.6)]"></i>
+            <span class="text-[9px] font-black tracking-widest text-emerald-200 uppercase mt-1 font-mono">HZM • 1998</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shop Urdu Name with Metallic Golden Shimmer -->
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black font-urdu text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-emerald-200 motion-title-shimmer leading-tight mb-2">
+        ہارون زرعی مرکز
+      </h1>
+
+      <!-- English Subtitle & Badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-extrabold text-xs sm:text-sm tracking-wider uppercase font-mono shadow-md mb-3">
+        <span>HAROON ZARAI MARKAZ</span>
+      </div>
+
+      <!-- Address / Location -->
+      <div class="flex items-center justify-center gap-2 text-xs sm:text-sm text-emerald-100/90 font-medium mb-5">
+        <i class="fa-solid fa-location-dot text-amber-400"></i>
+        <span>پل 88، شادی خان منڈا، کوٹ ادو</span>
+      </div>
+
+      <!-- Slogan -->
+      <p class="text-xs text-amber-200/80 font-urdu max-w-sm mb-6">
+        کسان کی خوشحالی، ہماری اولین ترجیح • تصدیق شدہ کھاد، بیج و زرعی ادویات
+      </p>
+
+      <!-- 5-Second Animated Progress Bar & Live Countdown -->
+      <div class="w-64 sm:w-72 bg-emerald-950/90 border border-emerald-600/40 rounded-2xl p-3 shadow-xl backdrop-blur-md">
+        <div class="flex justify-between items-center text-[11px] font-bold text-emerald-200 mb-1.5">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span>پورٹل لوڈ ہو رہا ہے...</span>
+          </span>
+          <span id="motion-countdown-text" class="font-mono text-amber-300 font-black">5s</span>
+        </div>
+        
+        <!-- Bar track -->
+        <div class="w-full h-2 bg-emerald-900/80 rounded-full overflow-hidden p-0.5 border border-emerald-700/50">
+          <div id="motion-progress-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-yellow-400 to-amber-500 motion-progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Skip / Enter Immediately Button -->
+      <button 
+        type="button" 
+        onclick="dismissMotionSplash()" 
+        class="mt-4 text-xs font-bold text-emerald-300/80 hover:text-white bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-500/30 px-4 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+      >
+        <span>چھوڑیں اور داخل ہوں (Skip)</span>
+        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+      </button>
+
+    </div>
+  </div>
+
+  <script>
+    // 5-Second Motion Splash Timer
+    (function() {
+      let timeLeft = 5;
+      const countdownElem = document.getElementById('motion-countdown-text');
+      const timer = setInterval(function() {
+        timeLeft--;
+        if (countdownElem) countdownElem.innerText = Math.max(timeLeft, 0) + 's';
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          dismissMotionSplash();
+        }
+      }, 1000);
+
+      window._motionSplashTimeout = setTimeout(function() {
+        dismissMotionSplash();
+      }, 5000);
+    })();
+
+    function dismissMotionSplash() {
+      const splash = document.getElementById('motion-intro-splash');
+      if (!splash || splash._isDismissed) return;
+      splash._isDismissed = true;
+      if (window._motionSplashTimeout) clearTimeout(window._motionSplashTimeout);
+      splash.classList.add('splash-exit');
+      setTimeout(function() {
+        splash.style.display = 'none';
+        splash.remove();
+      }, 700);
+    }
+  </script>
+  </script>
+
+  <!-- TOP BAR / ANNOUNCEMENT (LIGHT ORANGE / YELLOW) -->
+  <div class="topbar-gradient text-agroorange-700 py-2.5 px-4 text-xs md:text-sm border-b border-agroorange-200 shadow-sm">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+      <div class="flex items-center gap-2 overflow-hidden w-full md:w-auto">
+        <span class="bg-agroorange-500 text-white font-extrabold px-3 py-0.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1 shadow-sm" data-i18n="top_announcement_badge">
+          <i class="fa-solid fa-bullhorn text-[10px]"></i> تازہ ترین اعلان
+        </span>
+        <span id="announcement-text" class="truncate font-bold text-gray-800" data-i18n="top_announcement_text">
+          🌾 گندم، سفید تل اور سورج مکھی کی نقد خریداری بہترین ریٹ پر جاری ہے!
+        </span>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-bold text-gray-700">
+        <!-- 3-Option Language Switcher in Top Bar -->
+        <div class="inline-flex items-center bg-white/95 p-0.5 rounded-xl border border-agroorange-300 shadow-xs text-xs font-black">
+          <button type="button" onclick="setLanguage('ur')" data-lang="ur" class="lang-pill px-2.5 py-1 rounded-lg transition" title="صرف اردو">🇵🇰 اردو</button>
+          <button type="button" onclick="setLanguage('en')" data-lang="en" class="lang-pill px-2.5 py-1 rounded-lg transition" title="English Only">🇬🇧 English</button>
+          <button type="button" onclick="setLanguage('both')" data-lang="both" class="lang-pill px-2.5 py-1 rounded-lg transition" title="دونوں زبانیں (Urdu + English)">🌐 دونوں (Both)</button>
+        </div>
+        <span class="text-agroorange-300">|</span>
+        <a id="top-phone-link" href="tel:03007654321" class="hover:text-agroorange-600 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-phone text-agroorange-500"></i> <span id="top-phone" dir="ltr">0300-7654321</span>
+        </a>
+        <span class="text-agroorange-300">|</span>
+        <span class="text-gray-600 text-xs" data-i18n="top_timings">اوقات: صبح 8 تا رات 8 بجے</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN NAVIGATION (CLEAN WITH LIGHT GREEN & ORANGE ACCENTS) -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-agroorange-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+        
+        <!-- Logo & Branding -->
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-13 h-13 p-2.5 rounded-2xl bg-gradient-to-tr from-agroorange-500 via-agroyellow-400 to-brand-500 flex items-center justify-center text-white shadow-md shadow-agroorange-500/20 group-hover:scale-105 transition">
+            <i class="fa-solid fa-wheat-awn text-2xl text-white drop-shadow"></i>
+          </div>
+          <div>
+            <h1 class="text-xl md:text-2xl font-black text-brand-900 tracking-tight leading-none font-urdu" data-i18n="brand_title">
+              ہارون زرعی مرکز
+            </h1>
+            <p class="text-[11px] md:text-xs text-agroorange-600 font-extrabold tracking-wider uppercase mt-1" data-i18n="brand_sub">
+              HAROON ZARAI MARKAZ • پل 88، شادی خان منڈا، کوٹ ادو
+            </p>
+          </div>
+        </a>
+
+        <!-- Desktop Menu -->
+        <nav class="hidden lg:flex items-center gap-3 text-xs xl:text-sm font-bold text-gray-700">
+          <a href="/khata" class="hover:text-emerald-950 transition flex items-center gap-1.5 text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-xl border border-emerald-300 shadow-2xs font-black">
+            <i class="fa-solid fa-book-bookmark text-emerald-600"></i> <span>ڈیجیٹل کسان کھاتہ</span>
+          </a>
+          <a href="/adviyaat?cat=pesticide" class="hover:text-amber-950 transition flex items-center gap-1.5 text-amber-950 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-xl border border-amber-300 shadow-2xs font-black">
+            <i class="fa-solid fa-flask-vial text-amber-600"></i> <span>زرعی ادویات</span>
+          </a>
+          <a href="/khaad" class="hover:text-blue-950 transition flex items-center gap-1.5 text-blue-950 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl border border-blue-300 shadow-2xs font-black">
+            <i class="fa-solid fa-cubes-stacked text-blue-600"></i> <span>کھاد سینٹر</span>
+          </a>
+          <a href="/beej" class="hover:text-teal-950 transition flex items-center gap-1.5 text-teal-950 bg-teal-50 hover:bg-teal-100 px-3 py-2 rounded-xl border border-teal-300 shadow-2xs font-black">
+            <i class="fa-solid fa-seedling text-teal-600"></i> <span>فصلوں و گھاس کے بیج</span>
+          </a>
+          <a href="/mandi" class="hover:text-yellow-950 transition flex items-center gap-1.5 text-yellow-950 bg-yellow-50 hover:bg-yellow-100 px-3 py-2 rounded-xl border border-yellow-300 shadow-2xs font-black">
+            <i class="fa-solid fa-wheat-awn text-yellow-600"></i> <span>منڈی ریٹ</span>
+          </a>
+          <a href="#contact" class="hover:text-gray-900 transition flex items-center gap-1 py-2 px-2.5 rounded-xl hover:bg-gray-100 font-bold">
+            <i class="fa-solid fa-location-dot text-gray-500"></i> <span>رابطہ</span>
+          </a>
+        </nav>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-2">
+          <!-- Farmer Active User Header Pill (Shown when logged in) -->
+          <div id="header-user-pill" class="hidden items-center gap-2 bg-emerald-50 border-2 border-emerald-400 px-3 py-1.5 rounded-2xl font-black text-xs text-emerald-950 shadow-xs">
+            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <span id="header-user-name">کسان بھائی</span>
+            <a href="/khata" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-2.5 py-1 rounded-lg shadow-2xs transition">
+              میرا کھاتہ
+            </a>
+            <button type="button" onclick="farmerLogout()" class="text-rose-600 hover:text-rose-800 text-[11px] font-extrabold px-1.5 py-0.5 hover:bg-rose-50 rounded transition cursor-pointer" title="لاگ آؤٹ کریں">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> لاگ آؤٹ
+            </button>
+          </div>
+
+          <!-- 3-Language Segmented Switcher in Header (Desktop) -->
+          <div class="hidden sm:inline-flex items-center bg-agroyellow-50/90 p-1 rounded-xl border-2 border-agroyellow-300 shadow-xs text-xs font-black">
+            <button type="button" onclick="setLanguage('ur')" data-lang="ur" class="lang-pill px-2.5 py-1 rounded-lg transition">🇵🇰 اردو</button>
+            <button type="button" onclick="setLanguage('en')" data-lang="en" class="lang-pill px-2.5 py-1 rounded-lg transition">🇬🇧 English</button>
+            <button type="button" onclick="setLanguage('both')" data-lang="both" class="lang-pill px-2.5 py-1 rounded-lg transition">🌐 دونوں (Both)</button>
+          </div>
+
+          <!-- Mobile Quick Cycle Button -->
+          <button 
+            type="button"
+            onclick="cycleLanguage()" 
+            class="sm:hidden inline-flex items-center gap-1.5 bg-gradient-to-r from-agroyellow-100 to-agroyellow-200 border-2 border-agroyellow-400 text-brand-950 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs"
+            title="Switch Language / زبان تبدیل کریں (Urdu / English / Both)"
+          >
+            <i class="fa-solid fa-language text-agroorange-600"></i>
+            <span id="mobile-lang-btn-label">🌐 اردو + EN</span>
+          </button>
+
+          <a id="whatsapp-header-btn" href="https://wa.me/923007654321" target="_blank" class="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition hover:shadow-lg">
+            <i class="fa-brands fa-whatsapp text-lg"></i>
+            <span data-i18n="btn_whatsapp">واٹس ایپ رابطہ</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO / SHOP IDENTITY (SHOP NAME & ADDRESS) ==================== -->
+  <section class="relative overflow-hidden hero-agro-gradient text-gray-900 pt-10 pb-16 md:py-20 text-center">
+    <!-- Sunny Agricultural Dots Overlay -->
+    <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#16a34a_1px,transparent_1px)] [background-size:24px_24px]"></div>
+    
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+      
+      <!-- Top Certified Badge -->
+      <div class="inline-flex items-center gap-2 bg-white/95 border-2 border-agroorange-300 rounded-full px-5 py-2 text-xs md:text-sm text-agroorange-800 font-black shadow-xs">
+        <i class="fa-solid fa-certificate text-emerald-600 text-base"></i>
+        <span>حکومت پنجاب سے منظور شدہ ڈیلر • ڈیجیٹل وزنی کانٹا • فوری کیش پیمنٹ</span>
+      </div>
+
+      <!-- SHOP NAME (MAIN TITLE) -->
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight text-brand-950 font-urdu pt-2" id="hero-business-name">
+        ہارون زرعی مرکز
+      </h1>
+      <p class="text-xs sm:text-sm font-extrabold text-agroorange-700 tracking-widest uppercase font-mono">
+        HAROON ZARAI MARKAZ • PULL 88, KOT ADDU
+      </p>
+
+      <!-- SHOP ADDRESS BANNER -->
+      <div class="inline-flex items-center gap-3 bg-white/95 backdrop-blur-xs border-2 border-brand-300 rounded-2xl px-6 py-3.5 shadow-md max-w-xl mx-auto text-right">
+        <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div>
+          <span class="text-[11px] text-gray-500 font-bold block">دکان کا مکمل پتہ (Shop Address):</span>
+          <span class="text-sm sm:text-base font-black text-gray-900 font-urdu" id="hero-address-text">
+            پل 88، شادی خان منڈا، کوٹ ادو (PULL 88, Shadi Khan Munda, Kot Addu)
+          </span>
+        </div>
+      </div>
+
+      <!-- Slogan & Intro -->
+      <p class="text-xs sm:text-sm text-gray-700 max-w-xl mx-auto leading-relaxed font-semibold pt-1" id="hero-tagline-text">
+        کسان کی خوشحالی، ہماری اولین ترجیح • اصل بیج، کھاد، زرعی ادویات اور غلہ منڈی میں گندم، تل اور سورج مکھی کی نقد خریداری۔
+      </p>
+
+    </div>
+  </section>
+
+  <!-- ==================== 5 DEDICATED MASTER PORTAL BUTTONS ==================== -->
+  <section class="relative z-20 -mt-8 sm:-mt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+    <div class="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-agroorange-300">
+      
+      <div class="text-center max-w-3xl mx-auto mb-8">
+        <span class="inline-flex items-center gap-1.5 bg-gradient-to-r from-agroorange-100 to-amber-100 text-agroorange-900 text-xs font-black px-4 py-1.5 rounded-full border border-agroorange-300 uppercase shadow-xs">
+          <i class="fa-solid fa-shapes text-amber-500"></i> ہارون زرعی مرکز کی ۵ مرکزی خدمات و پورٹلز
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 font-urdu mt-2.5 leading-tight">
+          کسان بھائی اپنی مطلوبہ خدمت کا الگ بٹن منتخب کریں
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-600 font-medium mt-1">
+          کھاتہ، زرعی ادویات، کھادیں، گھاس و فصلوں کے بیج، اور منڈی ریٹس کے لیے مخصوص سیکشنز:
+        </p>
+      </div>
+
+      <!-- ROW 1: 2 MAIN MASTER SERVICES (KHATA & MANDI) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        
+        <!-- BUTTON 1: DIGITAL KHATA -->
+        <a href="/khata" class="group relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl shadow-emerald-900/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-emerald-700/35 border-2 border-emerald-400/50 flex flex-col justify-between block cursor-pointer">
+          <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition duration-500"></div>
+          
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white text-emerald-800 flex items-center justify-center text-2xl sm:text-3xl shadow-lg group-hover:scale-110 transition duration-300">
+                <i class="fa-solid fa-book-bookmark"></i>
+              </div>
+              <span id="home-khata-badge" class="bg-emerald-500/80 backdrop-blur-xs text-white text-[11px] font-black px-3.5 py-1.5 rounded-full border border-emerald-300/40 shadow-xs">
+                🔒 کسان کھاتہ بک
+              </span>
+            </div>
+            
+            <h3 id="home-khata-title" class="text-xl sm:text-2xl font-black font-urdu tracking-wide mb-2 text-white">
+              ڈیجیٹل کسان کھاتہ پورٹل
+            </h3>
+            <p id="home-khata-desc" class="text-xs sm:text-sm text-emerald-100 leading-relaxed font-medium mb-4">
+              اپنا موبائل نمبر لگا کر کسان کھاتہ چیک کریں، سابقہ بقایا، خریدا گیا ادھار مال، نقد وصولی اور پرچیوں کے تصویری ثبوت دیکھیں۔
+            </p>
+          </div>
+
+          <div class="pt-3.5 border-t border-emerald-600/50 flex items-center justify-between text-white font-black text-sm">
+            <span id="home-khata-action" class="flex items-center gap-2 group-hover:underline">
+              کھاتہ صفحہ اوپن کریں <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1.5"></i>
+            </span>
+            <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs shadow-inner">
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+          </div>
+        </a>
+
+        <!-- BUTTON 2: MANDI RATES -->
+        <a href="/mandi" class="group relative overflow-hidden bg-gradient-to-br from-amber-600 via-amber-700 to-yellow-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl shadow-yellow-950/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-amber-600/35 border-2 border-yellow-400/50 flex flex-col justify-between block cursor-pointer">
+          <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none group-hover:scale-150 transition duration-500"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white text-amber-700 flex items-center justify-center text-2xl sm:text-3xl shadow-lg group-hover:scale-110 transition duration-300">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <span class="bg-yellow-500/80 backdrop-blur-xs text-brand-950 text-[11px] font-black px-3.5 py-1.5 rounded-full border border-yellow-300/40 shadow-xs">
+                🌾 آج کے منڈی بھاؤ
+              </span>
+            </div>
+
+            <h3 class="text-xl sm:text-2xl font-black font-urdu tracking-wide mb-2 text-white">
+              گندم، چاول و منڈی ریٹس
+            </h3>
+            <p class="text-xs sm:text-sm text-yellow-100 leading-relaxed font-medium mb-4">
+              گندم، دھان، سفید و کالا تل، سرسوں اور سورج مکھی کے روزانہ ریٹس، ریٹ کیلکولیٹر اور نقد فصل خریداری کا آن لائن فارم۔
+            </p>
+          </div>
+
+          <div class="pt-3.5 border-t border-yellow-600/40 flex items-center justify-between text-white font-black text-sm">
+            <span class="flex items-center gap-2 group-hover:underline">
+              منڈی ریٹس بورڈ اوپن کریں <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1.5"></i>
+            </span>
+            <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs shadow-inner">
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- ROW 2: 3 SPECIFIC SEPARATE STORE BUTTONS (ADVIYAAT, KHAAD, SEEDS) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        <!-- BUTTON 3: ZARAI ADVIYAAT (ALAG BUTTON) -->
+        <a href="/adviyaat?cat=pesticide" class="group relative overflow-hidden bg-gradient-to-br from-orange-600 via-amber-600 to-rose-700 text-white rounded-3xl p-6 shadow-lg shadow-orange-900/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange-600/30 border-2 border-orange-300/60 flex flex-col justify-between block cursor-pointer">
+          <div class="absolute -right-8 -bottom-8 w-28 h-28 bg-white/10 rounded-full blur-lg pointer-events-none group-hover:scale-150 transition duration-500"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-13 h-13 rounded-2xl bg-white text-orange-600 flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition duration-300">
+                <i class="fa-solid fa-flask-vial"></i>
+              </div>
+              <span class="bg-orange-800/80 backdrop-blur-xs text-white text-[10px] font-black px-3 py-1 rounded-full border border-orange-300/40 shadow-xs">
+                🧪 زرعی اسپرے و کیمیکلز
+              </span>
+            </div>
+
+            <h3 class="text-lg sm:text-xl font-black font-urdu tracking-wide mb-1.5 text-white">
+              زرعی ادویات و اسپرے
+            </h3>
+            <p class="text-xs text-orange-100 leading-relaxed font-medium mb-4">
+              تمام ملٹی نیشنل کمپنیوں (Bayer, FMC, Syngenta) کی اصلی کیڑے مار، جڑی بوٹی مار، اور پھپھوند کش زہریں مع طریقہ استعمال۔
+            </p>
+          </div>
+
+          <div class="pt-3 border-t border-orange-400/40 flex items-center justify-between text-white font-black text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 group-hover:underline">
+              زرعی ادویات دیکھیں <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+            </span>
+            <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+          </div>
+        </a>
+
+        <!-- BUTTON 4: KHAAD (ALAG SE BUTTON) -->
+        <a href="/khaad" class="group relative overflow-hidden bg-gradient-to-br from-blue-700 via-indigo-700 to-cyan-900 text-white rounded-3xl p-6 shadow-lg shadow-blue-900/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-blue-600/30 border-2 border-blue-300/60 flex flex-col justify-between block cursor-pointer">
+          <div class="absolute -right-8 -bottom-8 w-28 h-28 bg-white/10 rounded-full blur-lg pointer-events-none group-hover:scale-150 transition duration-500"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-13 h-13 rounded-2xl bg-white text-blue-700 flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition duration-300">
+                <i class="fa-solid fa-cubes-stacked"></i>
+              </div>
+              <span class="bg-blue-900/80 backdrop-blur-xs text-white text-[10px] font-black px-3 py-1 rounded-full border border-blue-300/40 shadow-xs">
+                ⚡ کھادیں و نیوٹریشن
+              </span>
+            </div>
+
+            <h3 class="text-lg sm:text-xl font-black font-urdu tracking-wide mb-1.5 text-white">
+              کھاد سینٹر (Fertilizers)
+            </h3>
+            <p class="text-xs text-blue-100 leading-relaxed font-medium mb-4">
+              سونا یوریا (FFC)، اینگرو ڈی اے پی، سرسبز نائٹروفاس، این پی، سونا ایس او پی پوٹاش، اور 33% خالص زنک کا تازہ ترین اسٹاک و ریٹس۔
+            </p>
+          </div>
+
+          <div class="pt-3 border-t border-blue-400/40 flex items-center justify-between text-white font-black text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 group-hover:underline">
+              کھاد سینٹر کھولیں <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+            </span>
+            <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+          </div>
+        </a>
+
+        <!-- BUTTON 5: GHASS & FASLOON K SEEDS (ALAG BUTTON) -->
+        <a href="/beej" class="group relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-700 to-green-950 text-white rounded-3xl p-6 shadow-lg shadow-teal-900/20 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-teal-600/30 border-2 border-emerald-300/60 flex flex-col justify-between block cursor-pointer">
+          <div class="absolute -right-8 -bottom-8 w-28 h-28 bg-white/10 rounded-full blur-lg pointer-events-none group-hover:scale-150 transition duration-500"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-13 h-13 rounded-2xl bg-white text-teal-700 flex items-center justify-center text-2xl shadow-md group-hover:scale-110 transition duration-300">
+                <i class="fa-solid fa-seedling"></i>
+              </div>
+              <span class="bg-teal-900/80 backdrop-blur-xs text-white text-[10px] font-black px-3 py-1 rounded-full border border-teal-300/40 shadow-xs">
+                🌱 بیج، گھاس و چارہ
+              </span>
+            </div>
+
+            <h3 class="text-lg sm:text-xl font-black font-urdu tracking-wide mb-1.5 text-white">
+              گھاس و فصلوں کے بیج
+            </h3>
+            <p class="text-xs text-teal-100 leading-relaxed font-medium mb-4">
+              گندم (اکبر-19، ف-آباد)، دھان (سپر باسمتی، کائنات)، تل، سورج مکھی، سرسوں اور گھاس بیج (مصری برسیم، لوسرن، چارہ جوار)۔
+            </p>
+          </div>
+
+          <div class="pt-3 border-t border-teal-400/40 flex items-center justify-between text-white font-black text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 group-hover:underline">
+              بیج کیٹلاگ دیکھیں <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+            </span>
+            <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+  <!-- SECTION 5: CONTACT & LOCATION (رابطہ و پتہ) -->
+  <section id="contact" class="py-16 md:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  پل 88، شادی خان منڈا، کوٹ ادو (PULL 88, Shadi Khan Munda, Kot Addu)
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4 p-4 rounded-2xl bg-agroyellow-50/50 border border-agroyellow-100">
+              <div class="w-12 h-12 rounded-xl bg-agroyellow-100 text-agroyellow-700 flex items-center justify-center shrink-0 text-xl">
+                <i class="fa-solid fa-phone-flip"></i>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-gray-900 text-sm" data-i18n="contact_phone_label">رابطہ نمبرز:</h4>
+                <p class="text-gray-700 text-xs md:text-sm font-mono font-bold mt-0.5" dir="ltr" id="contact-phone-p">
+                  <a id="contact-phone-link" href="tel:03007654321" class="hover:text-agroorange-600">0300-7654321</a>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4 p-4 rounded-2xl bg-agroorange-50/50 border border-agroorange-100">
+              <div class="w-12 h-12 rounded-xl bg-agroorange-100 text-agroorange-700 flex items-center justify-center shrink-0 text-xl">
+                <i class="fa-brands fa-whatsapp"></i>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-gray-900 text-sm" data-i18n="contact_wa_label">واٹس ایپ ہیلپ لائن:</h4>
+                <p class="text-gray-700 text-xs md:text-sm font-mono font-bold mt-0.5" dir="ltr">
+                  <a id="contact-wa-link" href="https://wa.me/923007654321" target="_blank" class="hover:text-emerald-700">0300-7654321</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Map / Shop Hours Showcase -->
+        <div class="lg:col-span-6 bg-gradient-to-tr from-brand-900 via-brand-800 to-agroorange-700 text-white rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+          <div class="relative space-y-6">
+            <div class="flex items-center justify-between border-b border-white/20 pb-4">
+              <h3 class="text-xl font-bold font-urdu text-agroyellow-300" data-i18n="contact_timing_title">اوقاتِ کار (مرکز ٹائمنگز)</h3>
+              <span class="bg-agroorange-500 text-white text-xs font-bold px-3 py-1 rounded-full" data-i18n="contact_timing_open">کھلا ہے</span>
+            </div>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between py-1 border-b border-white/10">
+                <span class="text-emerald-200" data-i18n="contact_timing_weekdays">پیر تا ہفتہ:</span>
+                <span class="font-bold font-mono">08:00 AM - 08:00 PM</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-white/10">
+                <span class="text-emerald-200" data-i18n="contact_timing_sunday">اتوار (مارکیٹ ڈے):</span>
+                <span class="font-bold font-mono">09:00 AM - 05:00 PM</span>
+              </div>
+              <div class="flex justify-between py-1">
+                <span class="text-emerald-200" data-i18n="contact_timing_portal">آن لائن کھاتہ پورٹل:</span>
+                <span class="font-bold text-agroyellow-300 font-mono" data-i18n="contact_timing_247">24 گھنٹے 7 دن آن لائن</span>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-white/20">
+              <a id="contact-big-wa-btn" href="https://wa.me/923007654321?text=السلام%20علیکم%2C%20ہارون%20زرعی%20مرکز%20سے%20معلومات%20چاہئیں" target="_blank" data-i18n="contact_chat_btn" class="w-full bg-gradient-to-r from-emerald-500 to-brand-500 hover:from-emerald-600 hover:to-brand-600 text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition">
+                <i class="fa-brands fa-whatsapp text-xl"></i>
+                <span>واٹس ایپ پر فوری چیٹ شروع کریں</span>
+              </a>
+                <i class="fa-brands fa-whatsapp text-xl"></i>
+                <span>واٹس ایپ پر فوری چیٹ شروع کریں</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-950 text-emerald-100 py-12 border-t border-brand-900 text-xs md:text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-brand-900">
+        
+        <div class="space-y-3 md:col-span-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-agroorange-500 text-white flex items-center justify-center text-sm">
+              <i class="fa-solid fa-wheat-awn text-white"></i>
+            </div>
+            <span class="text-lg font-bold text-white font-urdu">ہارون زرعی مرکز</span>
+          </div>
+          <p class="text-emerald-200/80 text-xs leading-relaxed max-w-md">
+            گندم، چاول، سفید تل، سورج مکھی بیج اور دیگر تمام اجناس کی بااعتماد خرید و فروخت۔ زرعی ادویات، کھاد اور کسان کھاتہ بک کا ایک ہی چھت تلے مکمل حل۔
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-agroyellow-300 font-bold text-sm mb-3">اہم لنکس</h4>
+          <ul class="space-y-2 text-xs">
+            <li><a href="#rates" class="hover:text-agroorange-300 transition">آج کے منڈی ریٹ</a></li>
+            <li><a href="#khata" class="hover:text-agroorange-300 transition">کسان کھاتہ چیک کریں</a></li>
+            <li><a href="#trade" class="hover:text-agroorange-300 transition">فصل فروخت کی پیشکش</a></li>
+            <li><a href="#store" class="hover:text-agroorange-300 transition">زرعی ادویات و بیج</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-agroyellow-300 font-bold text-sm mb-3">انتظامیہ (Admin)</h4>
+          <p class="text-xs text-emerald-300/80 mb-2">صرف بااختیار ایڈمن عملے کے لیے۔</p>
+          <a href="/admin" class="text-xs text-emerald-300/80 hover:text-agroyellow-300 transition underline underline-offset-4 decoration-emerald-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-key text-[10px]"></i> ایڈمن لاگ ان لنک
+          </a>
+        </div>
+
+      </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-emerald-300/60">
+        <div>
+          © 2026 ہارون زرعی مرکز (HAROON ZARAI MARKAZ) • جملہ حقوق محفوظ ہیں۔
+        </div>
+        <div class="flex items-center gap-4 text-agroyellow-300">
+          <span>کسان کی خدمت، پاکستان کی ترقی</span>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- HIDDEN PRINTABLE KHATA SLIP TEMPLATE -->
+  <div id="printable-receipt" class="hidden">
+    <div style="direction: rtl; font-family: 'Inter', Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; border: 2px solid #ea580c; border-radius: 10px;">
+      
+      <!-- Letterhead -->
+      <div style="text-align: center; border-bottom: 2px solid #ea580c; padding-bottom: 15px; margin-bottom: 15px;">
+        <h1 style="margin: 0; font-size: 26px; color: #166534;">ہارون زرعی مرکز (پل 88، کوٹ ادو)</h1>
+        <h3 style="margin: 5px 0; font-size: 14px; color: #ea580c;">HAROON ZARAI MARKAZ - GRAIN & AGRI INPUTS TRADING</h3>
+        <p id="print-slip-contact" style="margin: 3px 0; font-size: 12px; color: #4b5563;">
+          پل 88، شادی خان منڈا، کوٹ ادو • فون: 0300-7654321 / 0301-9876543
+        </p>
+        <div style="display: inline-block; background: #ea580c; color: white; padding: 4px 15px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-top: 8px;">
+          سرکاری کسان کھاتہ پرچی (LEDGER STATEMENT)
+        </div>
+      </div>
+
+      <!-- Farmer Info Bar -->
+      <div style="display: flex; justify-content: space-between; background: #fff7ed; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; border: 1px solid #fed7aa;">
+        <div>
+          <strong>کسان کا نام:</strong> <span id="print-farmer-name"></span><br>
+          <strong>کسان آئی ڈی:</strong> <span id="print-farmer-id"></span>
+        </div>
+        <div>
+          <strong>ولدیت:</strong> <span id="print-farmer-father"></span><br>
+          <strong>گاؤں / چک:</strong> <span id="print-farmer-village"></span>
+        </div>
+        <div>
+          <strong>موبائل:</strong> <span id="print-farmer-mobile" dir="ltr"></span><br>
+          <strong>پرنٹ تاریخ:</strong> <span id="print-date"></span>
+        </div>
+      </div>
+
+      <!-- Balance Summary Box -->
+      <div style="border: 2px dashed #ea580c; padding: 12px; margin-bottom: 15px; text-align: center; background: #fefce8; border-radius: 6px;">
+        <h3 style="margin: 0 0 5px 0; font-size: 16px; color: #9a3412;" id="print-balance-title">صاف بقایا بیلنس</h3>
+        <h2 style="margin: 0; font-size: 24px; color: #c2410c; font-family: monospace;" id="print-net-balance">Rs. 0</h2>
+      </div>
+
+      <!-- Transactions Table -->
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 25px;">
+        <thead>
+          <tr style="background: #fed7aa; border-bottom: 1px solid #ea580c;">
+            <th style="padding: 6px; border: 1px solid #fdba74;">تاریخ</th>
+            <th style="padding: 6px; border: 1px solid #fdba74;">پیسے کس چیز کے ہیں (پراڈکٹ / سودا تفصیل)</th>
+            <th style="padding: 6px; border: 1px solid #fdba74;">مقدار و ریٹ</th>
+            <th style="padding: 6px; border: 1px solid #fdba74;">قسم</th>
+            <th style="padding: 6px; border: 1px solid #fdba74; color: #b91c1c;">نام (Debit)</th>
+            <th style="padding: 6px; border: 1px solid #fdba74; color: #15803d;">جمع (Credit)</th>
+            <th style="padding: 6px; border: 1px solid #fdba74;">بقایا</th>
+          </tr>
+        </thead>
+        <tbody id="print-transactions-body">
+        </tbody>
+      </table>
+
+      <!-- Footer Stamp & Sign -->
+      <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px;">
+        <div style="text-align: center; border-top: 1px solid #9ca3af; width: 180px; padding-top: 5px;">
+          دستخط کسان / گاہک
+        </div>
+        <div style="text-align: center; border-top: 1px solid #9ca3af; width: 180px; padding-top: 5px;">
+          مہر و دستخط برائے ہارون زرعی مرکز
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: PRODUCT FULL DETAILS (زرعی دوا و بیج تفصیلی رہنمائی گائیڈ) -->
+  <div id="modal-product-view" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border-2 border-brand-200 max-w-2xl w-full p-6 max-h-[92vh] overflow-y-auto relative text-right" dir="rtl">
+      <button onclick="closeProductViewModal()" class="absolute top-4 left-4 sm:top-5 sm:left-5 w-9 h-9 rounded-full bg-agroyellow-100 hover:bg-agroyellow-200 flex items-center justify-center text-gray-600 transition z-10 cursor-pointer">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+
+      <div class="flex flex-col sm:flex-row gap-5 items-start">
+        <!-- Big Photo with zoom -->
+        <div class="w-full sm:w-56 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border-2 border-agroorange-200 shadow-sm relative group">
+          <img id="view-prod-image" src="" alt="Product" class="w-full h-56 object-cover group-hover:scale-105 transition duration-300">
+          <span id="view-prod-cat" class="absolute top-2 right-2 bg-brand-900/90 text-agroyellow-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full"></span>
+        </div>
+
+        <!-- Title & Basic Info -->
+        <div class="flex-1 space-y-2 text-right">
+          <div class="flex items-center gap-2">
+            <span id="view-prod-company" class="text-xs font-black text-agroorange-600 uppercase tracking-wider"></span>
+            <span class="text-gray-300">|</span>
+            <span id="view-prod-pack" class="text-xs font-bold text-gray-500"></span>
+          </div>
+
+          <h3 id="view-prod-name-urdu" class="text-xl sm:text-2xl font-black text-gray-900 font-urdu leading-snug"></h3>
+          <p id="view-prod-name-en" class="text-xs font-mono font-bold text-gray-500" dir="ltr"></p>
+
+          <div class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-xs font-bold mt-1">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span>ہارون زرعی مرکز پر اصلی اور تصدیق شدہ دستیاب ہے</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agricultural Details Specs Grid -->
+      <div class="mt-6 space-y-3 border-t border-agroorange-100 pt-5 text-xs sm:text-sm">
+        
+        <!-- Active Ingredient / Formula -->
+        <div id="view-row-active" class="p-3 rounded-2xl bg-brand-50/70 border border-brand-200 flex flex-col sm:flex-row justify-between gap-1">
+          <span class="font-bold text-brand-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-flask-vial text-brand-600"></i> فعال زہر / کیمیائی فارمولا:
+          </span>
+          <span id="view-prod-active" class="font-bold font-mono text-brand-950 sm:text-left" dir="ltr">-</span>
+        </div>
+
+        <!-- Recommended Crops -->
+        <div id="view-row-crops" class="p-3 rounded-2xl bg-agroyellow-50/70 border border-agroyellow-300 flex flex-col sm:flex-row justify-between gap-1">
+          <span class="font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-wheat-awn text-amber-600"></i> موزوں و تجویز کردہ فصلیں:
+          </span>
+          <span id="view-prod-crops" class="font-bold text-gray-900 sm:text-left">-</span>
+        </div>
+
+        <!-- Target Pests & Diseases -->
+        <div id="view-row-pests" class="p-3 rounded-2xl bg-rose-50/70 border border-rose-200 flex flex-col sm:flex-row justify-between gap-1">
+          <span class="font-bold text-rose-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-bug text-rose-600"></i> کنٹرول ہونے والے کیڑے و بیماریاں:
+          </span>
+          <span id="view-prod-pests" class="font-bold text-gray-900 sm:text-left">-</span>
+        </div>
+
+        <!-- Dosage & Application -->
+        <div id="view-row-dosage" class="p-3 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row justify-between gap-1">
+          <span class="font-bold text-blue-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-scale-balanced text-blue-600"></i> فی ایکڑ مقدار و خوراک:
+          </span>
+          <span id="view-prod-dosage" class="font-bold text-gray-900 sm:text-left">-</span>
+        </div>
+
+        <!-- Full Description & Usage Guide -->
+        <!-- Full Description & Usage Guide -->
+        <div class="p-4 rounded-2xl bg-white border-2 border-agroyellow-200 space-y-1.5">
+          <span class="font-black text-brand-950 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-agroorange-600"></i> تفصیلی طریقہ استعمال و رہنمائی:
+          </span>
+          <p id="view-prod-desc" class="text-xs text-gray-700 leading-relaxed font-medium"></p>
+        </div>
+
+        <!-- Precautions -->
+        <div id="view-row-precautions" class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="block">حفاظتی احتیاطی تدابیر:</strong>
+            <span id="view-prod-precautions">صبح سویرے یا شام کے وقت ترجیحاً سپرے کریں۔ حفاظتی ماسک اور دستانے استعمال کریں۔ بچوں کی پہنچ سے دور رکھیں۔</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div class="mt-6 pt-4 border-t border-agroorange-100 flex flex-col sm:flex-row gap-3">
+        <a id="view-prod-wa-inquire" href="" target="_blank" class="flex-1 bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white font-extrabold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-md transition">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span>اس دوا کے متعلق مزید معلومات لیں</span>
+        </a>
+        <button type="button" onclick="closeProductViewModal()" class="px-6 py-3 rounded-xl bg-agroyellow-100 hover:bg-agroyellow-200 text-gray-800 font-bold text-xs transition cursor-pointer">
+          بند کریں (Close)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: TRANSACTION PROOF SLIP VIEWER FOR FARMERS -->
+  <div id="modal-proof-viewer" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border-2 border-brand-200 max-w-xl w-full p-5 max-h-[95vh] flex flex-col relative text-right" dir="rtl">
+      <button onclick="closeProofModal()" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-agroyellow-100 hover:bg-agroyellow-200 flex items-center justify-center text-gray-600 transition z-10 cursor-pointer">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+
+      <div class="flex items-center gap-2.5 pb-3 border-b border-agroorange-100">
+        <div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold shadow-xs">
+          <i class="fa-solid fa-file-invoice"></i>
+        </div>
+        <div>
+          <h3 class="text-base sm:text-lg font-black text-gray-900 font-urdu" id="proof-modal-title">رسید / پرچی کا تصویری ثبوت</h3>
+          <p class="text-[11px] text-gray-500" id="proof-modal-subtitle">کھاتے کے اس اندراج کے لیے باضابطہ منسلک شدہ ثبوت</p>
+        </div>
+      </div>
+
+      <!-- High-res Image Preview -->
+      <div class="my-4 flex-1 overflow-auto rounded-2xl bg-gray-50 border-2 border-agroorange-200 p-2 flex items-center justify-center min-h-[250px] max-h-[60vh]">
+        <img id="proof-modal-img" src="" alt="Proof Image" class="max-w-full max-h-full object-contain rounded-xl shadow-md">
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="pt-3 border-t border-agroorange-100 flex items-center justify-between">
+        <a id="proof-modal-download" href="" target="_blank" download="haroon-zarai-proof.jpg" class="bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-download"></i> تصویر ڈاؤنلوڈ کریں
+        </a>
+        <button type="button" onclick="closeProofModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-5 py-2 rounded-xl text-xs transition cursor-pointer">
+          بند کریں (Close)
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL: FORGOT PASSWORD REQUEST (پاس ورڈ بھول جانے کی صورت میں درخواست) -->
+  <div id="modal-forgot-password" class="hidden fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border-2 border-amber-300 max-w-md w-full p-6 relative text-right" dir="rtl">
+      <button onclick="closeForgotPasswordModal()" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-amber-100 hover:bg-amber-200 flex items-center justify-center text-gray-600 transition z-10 cursor-pointer">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 shadow-xs flex items-center justify-center text-2xl mb-3">
+          <i class="fa-solid fa-key"></i>
+        </div>
+        <h3 class="text-xl font-black text-gray-900 font-urdu">پاس ورڈ ریکوری درخواست</h3>
+        <p class="text-xs text-gray-500 mt-1">اپنا موبائل نمبر یا شناختی کارڈ درج کریں۔ ہماری ٹیم آپ سے فوراً رابطہ کر کے پاس ورڈ فراہم کرے گی</p>
+      </div>
+
+      <form id="form-forgot-password" onsubmit="handleForgotPasswordSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">موبائل نمبر یا شناختی کارڈ نمبر: *</label>
+          <input type="text" id="fp-identifier" required placeholder="03162835813 یا 32303-0519829-7" dir="ltr" class="w-full p-3 bg-amber-50/50 border-2 border-amber-200 rounded-xl focus:bg-white focus:border-amber-600 focus:outline-none font-bold text-right font-mono text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">کسان کا پورا نام: *</label>
+          <input type="text" id="fp-name" required placeholder="مثال: محمد نعمان رشید" class="w-full p-3 bg-amber-50/50 border-2 border-amber-200 rounded-xl focus:bg-white focus:border-amber-600 focus:outline-none font-bold text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">کوئی اضافی پیغام یا نوٹ (اختیاری):</label>
+          <textarea id="fp-message" rows="2" placeholder="مثال: میرا نیا واٹس ایپ نمبر یہ ہے یا نیا پاس ورڈ واٹس ایپ کر دیں..." class="w-full p-3 bg-amber-50/50 border-2 border-amber-200 rounded-xl focus:bg-white focus:border-amber-600 focus:outline-none text-xs font-medium resize-none"></textarea>
+        </div>
+
+        <button type="submit" id="btn-submit-fp" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-agroorange-600 hover:from-amber-700 hover:to-agroorange-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>پاس ورڈ ریکوری کی درخواست بھیجیں</span>
+        </button>
+
+        <div class="relative flex items-center justify-center my-2">
+          <div class="border-t border-gray-200 w-full"></div>
+          <span class="bg-white px-3 text-[11px] font-bold text-gray-400 absolute">یا واٹس ایپ پر فوری رابطہ</span>
+        </div>
+
+        <a id="fp-whatsapp-direct" href="https://wa.me/923007654321?text=اسلام%20علیکم%20ہارون%20زرعی%20مرکز!%20میں%20اپنا%20پاس%20ورڈ%20بھول%20گیا%20ہوں۔%20براہ%20کرم%20رہنمائی%20فرمائیں۔" target="_blank" class="w-full py-3 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-xs flex items-center justify-center gap-2 transition">
+          <i class="fa-brands fa-whatsapp text-base text-emerald-600"></i>
+          <span>واٹس ایپ پر میسج کر کے فوراً پاس ورڈ لیں</span>
+        </a>
+      </form>
+    </div>
+  </div>
+  <!-- MODAL: WELCOME FIRST SCREEN GATEWAY FOR VISITORS -->
+  <div id="modal-farmer-gateway" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border-2 border-agroorange-300 max-w-lg w-full p-6 max-h-[95vh] overflow-y-auto relative text-right" dir="rtl">
+      
+      <!-- Close / Skip Button -->
+      <button onclick="closeGatewayModal()" class="absolute top-4 left-4 text-xs font-bold text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+        <span>ویب سائٹ دیکھیں</span>
+        <i class="fa-solid fa-arrow-left text-[11px]"></i>
+      </button>
+
+      <div class="text-center pt-2 mb-5">
+        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-brand-600 to-agroorange-500 text-white mx-auto flex items-center justify-center text-2xl shadow-lg mb-3">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="text-2xl font-black text-gray-900 font-urdu leading-snug">ہارون زرعی مرکز کسان لاگ ان</h2>
+        <p class="text-xs text-gray-500 mt-1 max-w-xs mx-auto">اپنا ذاتی ڈیجیٹل کسان کھاتہ اور لین دین دیکھنے کے لیے لاگ ان کریں</p>
+      </div>
+
+      <!-- GW LOGIN FORM -->
+      <div id="gw-tab-login" class="space-y-4">
+        <form onsubmit="handleGatewayLogin(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">موبائل نمبر یا شناختی کارڈ: *</label>
+            <input type="text" id="gw-login-id" required placeholder="03162835813 یا 32303-0519829-7" dir="ltr" class="w-full p-3 bg-agroyellow-50/50 border-2 border-agroyellow-200 rounded-xl focus:bg-white focus:border-agroorange-500 focus:outline-none font-bold text-right font-mono text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">پاس ورڈ (Password): *</label>
+            <input type="password" id="gw-login-pass" required placeholder="اپنا پاس ورڈ درج کریں" class="w-full p-3 bg-agroyellow-50/50 border-2 border-agroyellow-200 rounded-xl focus:bg-white focus:border-agroorange-500 focus:outline-none font-bold text-sm">
+          </div>
+          
+          <button type="submit" id="gw-login-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-agroorange-500 to-amber-500 hover:from-agroorange-600 hover:to-amber-600 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>کھاتے میں لاگ ان کریں</span>
+          </button>
+          
+          <div class="flex items-center justify-between text-xs pt-1 px-1">
+            <button type="button" onclick="openForgotPasswordModal()" class="font-bold text-amber-700 hover:text-amber-800 underline flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-key text-[11px]"></i>
+              <span>پاس ورڈ بھول گئے ہیں؟ (Forgot Password)</span>
+            </button>
+          </div>
+        </form>
+
+        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-right">
+          <div class="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs mb-1">
+            <i class="fa-solid fa-circle-info text-amber-600"></i>
+            <span>ضروری کسان اطلاع:</span>
+          </div>
+          <p class="text-[11px] text-amber-800 leading-relaxed font-semibold">
+            نیا کسان کھاتہ کھولنے کے لیے براہِ کرم ہارون زرعی مرکز کاؤنٹر (پل 88، شادی خان منڈا، کوٹ ادو) سے رابطہ فرمائیں۔ کھاتے صرف ایڈمن کی تصدیق سے بنائے جاتے ہیں۔
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-gray-100 text-center">
+        <button type="button" onclick="closeGatewayModal()" class="text-xs font-bold text-gray-500 hover:text-gray-800 transition cursor-pointer">
+          بغیر لاگ ان کے ویب سائٹ اور منڈی ریٹس دیکھیں (Skip to Browse) &larr;
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- FLOATING COMPLAINT BOX BUTTON (شکایات و تجاویز باکس - سائیڈ پر تصویر اپلوڈ کی سہولت کے ساتھ) -->
+  <button 
+    type="button" 
+    onclick="openComplaintModal()" 
+    id="btn-floating-complaint"
+    title="شکایات، تجاویز یا رسید کا تصویری ثبوت بھیجیں"
+    class="fixed bottom-6 left-6 z-40 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-extrabold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs sm:text-sm transition-all hover:scale-105 border-2 border-white/60 cursor-pointer"
+  >
+    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-base shadow-xs">
+      <i class="fa-solid fa-headset"></i>
+    </div>
+    <div class="text-right leading-tight">
+      <span class="block text-[10px] text-yellow-200 font-urdu">آن لائن مدد و رہنمائی</span>
+      <span class="block font-black font-urdu">شکایات و تجاویز باکس</span>
+    </div>
+  </button>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
