@@ -421,13 +421,23 @@ async function loadAdminStats() {
 }
 
 // 4. Farmers & Khata Management
+let recentFarmersOverviewCache = [];
+
 async function loadAllFarmers(search = '') {
   try {
     const res = await adminFetch(`/api/farmers?search=${encodeURIComponent(search)}`);
     if (res.ok) {
       allFarmersCache = await res.json();
+      recentFarmersOverviewCache = allFarmersCache.slice(0, 10);
       renderFarmersTable(allFarmersCache);
-      renderOverviewRecentFarmers(allFarmersCache.slice(0, 5));
+
+      const overviewSearchInput = document.getElementById('overview-farmer-search');
+      if (overviewSearchInput && overviewSearchInput.value.trim()) {
+        filterOverviewRecentFarmers(overviewSearchInput.value);
+      } else {
+        renderOverviewRecentFarmers(recentFarmersOverviewCache);
+      }
+
       const bF = document.getElementById('badge-total-farmers');
       if (bF) bF.innerText = allFarmersCache.length;
       const countEl = document.getElementById('admin-farmer-count');
@@ -444,7 +454,7 @@ function renderOverviewRecentFarmers(farmers) {
   if (!tbody) return;
 
   if (farmers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400">کوئی کسان درج نہیں ہے۔</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400 font-bold">کوئی کسان نہیں ملا۔</td></tr>`;
     return;
   }
 
@@ -498,6 +508,38 @@ function renderOverviewRecentFarmers(farmers) {
       </tr>
     `;
   }).join('');
+}
+
+// Live Search Filter for Overview Recent Farmers Table
+function filterOverviewRecentFarmers(val) {
+  const q = (val || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('overview-farmer-search-clear');
+  if (clearBtn) {
+    if (q) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
+  }
+
+  const list = allFarmersCache || [];
+  if (!q) {
+    renderOverviewRecentFarmers(recentFarmersOverviewCache.length ? recentFarmersOverviewCache : list.slice(0, 10));
+    return;
+  }
+
+  const filtered = list.filter(f => 
+    (f.name && f.name.toLowerCase().includes(q)) ||
+    (f.mobile && f.mobile.includes(q)) ||
+    (f.village && f.village.toLowerCase().includes(q)) ||
+    (f.cnic && f.cnic.includes(q)) ||
+    (String(f.id).includes(q))
+  );
+
+  renderOverviewRecentFarmers(filtered);
+}
+
+function clearOverviewFarmerSearch() {
+  const input = document.getElementById('overview-farmer-search');
+  if (input) input.value = '';
+  filterOverviewRecentFarmers('');
 }
 
 function renderFarmersTable(farmers) {
@@ -970,6 +1012,62 @@ function populateQuickTxFarmerDropdown(farmers) {
   }
 }
 
+// Live Filter & Search for Quick Khata Entry Farmer Selection
+function filterQuickTxFarmerDropdown(query) {
+  const q = (query || '').trim().toLowerCase();
+  const select = document.getElementById('quick-tx-farmer');
+  const clearBtn = document.getElementById('quick-tx-farmer-search-clear');
+  if (clearBtn) {
+    if (q) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
+  }
+  if (!select) return;
+
+  const list = allFarmersCache || [];
+  if (!q) {
+    populateQuickTxFarmerDropdown(list);
+    return;
+  }
+
+  const filtered = list.filter(f => 
+    (f.name && f.name.toLowerCase().includes(q)) ||
+    (f.mobile && f.mobile.includes(q)) ||
+    (f.village && f.village.toLowerCase().includes(q)) ||
+    (f.cnic && f.cnic.includes(q)) ||
+    (String(f.id).includes(q))
+  );
+
+  if (filtered.length === 0) {
+    select.innerHTML = `<option value="">-- کوئی کسان نہیں ملا ("${escapeHtml(q)}") --</option>`;
+    onQuickTxFarmerChange('');
+    return;
+  }
+
+  select.innerHTML = `<option value="">-- سرچ شدہ کسان (${filtered.length} ملے) --</option>` +
+    filtered.map(f => {
+      const balStr = f.currentBalance > 0 
+        ? `Rs. ${f.currentBalance.toLocaleString()} (ادھار)` 
+        : (f.currentBalance < 0 ? `Rs. ${Math.abs(f.currentBalance).toLocaleString()} (جمع)` : 'Rs. 0');
+      return `<option value="${f.id}">${f.id}: ${escapeHtml(f.name)} (${f.mobile || f.village || '-'}) • بقایا: ${balStr}</option>`;
+    }).join('');
+
+  // Auto-select the first matching farmer!
+  select.value = filtered[0].id;
+  onQuickTxFarmerChange(filtered[0].id);
+}
+
+function triggerQuickTxFarmerSearchBtn() {
+  const input = document.getElementById('quick-tx-farmer-search-input');
+  const val = input ? input.value : '';
+  filterQuickTxFarmerDropdown(val);
+}
+
+function clearQuickTxFarmerSearch() {
+  const input = document.getElementById('quick-tx-farmer-search-input');
+  if (input) input.value = '';
+  filterQuickTxFarmerDropdown('');
+}
+
 function populateQuickTxProductDropdown() {
   const dd = document.getElementById('quick-prod-dropdown');
   if (!dd) return;
@@ -1110,8 +1208,17 @@ function quickOpenKhataTx(farmerId, mode = 'debit') {
 
   const farmerSelect = document.getElementById('quick-tx-farmer');
   if (farmerSelect) {
+    populateQuickTxFarmerDropdown();
     farmerSelect.value = farmerId;
     onQuickTxFarmerChange(farmerId);
+  }
+
+  const searchInp = document.getElementById('quick-tx-farmer-search-input');
+  if (searchInp) {
+    const f = (allFarmersCache || []).find(x => x.id === farmerId);
+    if (f) searchInp.value = f.name;
+    const clearBtn = document.getElementById('quick-tx-farmer-search-clear');
+    if (clearBtn) clearBtn.classList.remove('hidden');
   }
 
   const radios = document.getElementsByName('quickTxModeRadio');
