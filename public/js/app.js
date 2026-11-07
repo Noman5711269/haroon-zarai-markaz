@@ -92,16 +92,18 @@ function cleanTelNumber(raw) {
 function applyShopLogo(logoUrl) {
   if (!logoUrl) return;
 
+  const versionedLogo = logoUrl.includes('?') ? logoUrl : (logoUrl + '?v=3');
+
   // 1. Hero Animated Emblem (index.html, khata.html)
   const heroLogoContainers = document.querySelectorAll('.motion-logo-box > div, #hero-logo-container');
   heroLogoContainers.forEach(container => {
-    container.innerHTML = `<img src="${logoUrl}" alt="دکان کا لوگو" class="w-full h-full object-cover rounded-[22px] shadow-lg">`;
+    container.innerHTML = `<img src="${versionedLogo}" alt="دکان کا لوگو" class="w-full h-full object-cover rounded-[22px] shadow-lg">`;
   });
 
   // 2. Navigation Header Logos (across all user pages)
   const navLogoWraps = document.querySelectorAll('header a .w-13.h-13, header a .w-12.h-12, .nav-logo-container');
   navLogoWraps.forEach(wrap => {
-    wrap.innerHTML = `<img src="${logoUrl}" alt="لوگو" class="w-full h-full object-cover rounded-xl shadow-xs">`;
+    wrap.innerHTML = `<img src="${versionedLogo}" alt="لوگو" class="w-full h-full object-cover rounded-xl shadow-xs">`;
     wrap.classList.remove('p-2.5', 'p-2');
     wrap.classList.add('p-0.5');
   });
@@ -109,7 +111,7 @@ function applyShopLogo(logoUrl) {
   // 3. Footer Logos if any
   const footerLogoWraps = document.querySelectorAll('footer .w-12.h-12, footer .w-14.h-14');
   footerLogoWraps.forEach(wrap => {
-    wrap.innerHTML = `<img src="${logoUrl}" alt="لوگو" class="w-full h-full object-cover rounded-xl shadow-xs">`;
+    wrap.innerHTML = `<img src="${versionedLogo}" alt="لوگو" class="w-full h-full object-cover rounded-xl shadow-xs">`;
     wrap.classList.remove('p-2');
     wrap.classList.add('p-0.5');
   });

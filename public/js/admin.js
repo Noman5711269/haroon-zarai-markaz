@@ -2899,7 +2899,8 @@ function updateShopLogoPreviewUI(logoUrl) {
   const removeBtn = document.getElementById('btn-remove-shop-logo');
   const hiddenInput = document.getElementById('set-shop-logo');
 
-  const finalLogo = logoUrl || '/images/hzm-logo.jpg';
+  const baseLogo = logoUrl || '/images/hzm-logo.jpg';
+  const finalLogo = baseLogo.includes('?') ? baseLogo : (baseLogo + '?v=3');
   if (hiddenInput) hiddenInput.value = logoUrl || '';
 
   if (previewImg) {
@@ -2917,7 +2918,8 @@ function updateShopLogoPreviewUI(logoUrl) {
 }
 
 function applyShopLogo(logoUrl) {
-  const finalLogo = logoUrl || '/images/hzm-logo.jpg';
+  const baseLogo = logoUrl || '/images/hzm-logo.jpg';
+  const finalLogo = baseLogo.includes('?') ? baseLogo : (baseLogo + '?v=3');
 
   // Admin Login Screen Logo
   const loginLogoImg = document.getElementById('admin-login-logo-img');

@@ -10,19 +10,35 @@
   // Check if prompt was already captured by early head script
   let deferredPrompt = window._deferredPwaPrompt || null;
 
-  // 1. REGISTER SERVICE WORKER
+  // 1. REGISTER SERVICE WORKER & AUTO UPDATE CACHE
   if ('serviceWorker' in navigator) {
+    // Purge obsolete PWA caches automatically
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        names.forEach((name) => {
+          if (name !== 'hzm-pwa-v1.3.0') {
+            console.log('🧹 [PWA Client] Deleting stale cache:', name);
+            caches.delete(name);
+          }
+        });
+      });
+    }
+
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
         .then((registration) => {
           console.log('🌾 [PWA] Service Worker registered with scope:', registration.scope);
+          // Force immediate check for updated worker
+          registration.update().catch(() => {});
+
           registration.onupdatefound = () => {
             const installingWorker = registration.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('🌾 [PWA] New version available! Reloading...');
+                  console.log('🌾 [PWA] New version installed! Reloading to show fresh logo and assets...');
+                  window.location.reload();
                 }
               };
             }
@@ -31,6 +47,14 @@
         .catch((err) => {
           console.warn('🌾 [PWA] Service Worker registration failed:', err);
         });
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
     });
   }
 
