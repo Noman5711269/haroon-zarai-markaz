@@ -1,5 +1,5 @@
-// Haroon Zarai Markaz PWA Service Worker (v1.4.0)
-const CACHE_NAME = 'hzm-pwa-v1.4.0';
+// Haroon Zarai Markaz PWA Service Worker (v1.6.0)
+const CACHE_NAME = 'hzm-pwa-v1.6.0';
 
 // Core static assets to pre-cache for instant loading & basic offline capability
 const CORE_ASSETS = [
@@ -19,6 +19,7 @@ const CORE_ASSETS = [
   '/manifest-admin.json',
   '/favicon.ico',
   '/images/hzm-logo.jpg',
+  '/images/hzm-banner.jpg',
   '/icons/icon-192.png',
   '/icons/icon-192-maskable.png',
   '/icons/icon-512.png',

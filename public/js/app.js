@@ -90,9 +90,8 @@ function cleanTelNumber(raw) {
 }
 
 function applyShopLogo(logoUrl) {
-  if (!logoUrl) return;
-
-  const versionedLogo = logoUrl.includes('?') ? logoUrl : (logoUrl + '?v=4');
+  const baseLogo = logoUrl || '/images/hzm-logo.jpg';
+  const versionedLogo = baseLogo.includes('?') ? baseLogo : (baseLogo + '?v=6');
 
   // 1. Hero Animated Emblem (index.html, khata.html)
   const heroLogoContainers = document.querySelectorAll('.motion-logo-box > div, #hero-logo-container');
@@ -116,6 +115,14 @@ function applyShopLogo(logoUrl) {
     wrap.classList.remove('p-2');
     wrap.classList.add('p-0.5');
   });
+
+  // 4. Master Brand Showcase Banners if custom logo uploaded
+  if (logoUrl && !logoUrl.includes('hzm-logo.jpg')) {
+    const banners = document.querySelectorAll('.brand-banner-img');
+    banners.forEach(b => {
+      b.src = versionedLogo;
+    });
+  }
 }
 
 // 1. Load Settings

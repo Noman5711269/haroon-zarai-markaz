@@ -16,7 +16,7 @@
     if ('caches' in window) {
       caches.keys().then((names) => {
         names.forEach((name) => {
-          if (name !== 'hzm-pwa-v1.4.0') {
+          if (name !== 'hzm-pwa-v1.6.0') {
             console.log('🧹 [PWA Client] Deleting stale cache:', name);
             caches.delete(name);
           }
