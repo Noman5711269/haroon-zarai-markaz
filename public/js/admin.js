@@ -1227,11 +1227,15 @@ function removeQuickTxProof() {
   const previewImg = document.getElementById('quick-tx-preview-img');
   const hiddenInp = document.getElementById('quick-tx-proof-image');
   const fileInp = document.getElementById('quick-tx-file');
+  const camInp = document.getElementById('quick-tx-camera');
+  const galInp = document.getElementById('quick-tx-gallery');
 
   if (previewBox) previewBox.classList.add('hidden');
   if (previewImg) previewImg.src = '';
   if (hiddenInp) hiddenInp.value = '';
   if (fileInp) fileInp.value = '';
+  if (camInp) camInp.value = '';
+  if (galInp) galInp.value = '';
 }
 
 // Quick Khata Form Submit Listener
@@ -1710,11 +1714,15 @@ function removeTxProofPhoto() {
   const previewImg = document.getElementById('tx-preview-img');
   const hiddenInp = document.getElementById('tx-proof-image');
   const fileInp = document.getElementById('tx-proof-file');
+  const camInp = document.getElementById('tx-proof-camera');
+  const galInp = document.getElementById('tx-proof-gallery');
 
   if (previewBox) previewBox.classList.add('hidden');
   if (previewImg) previewImg.src = '';
   if (hiddenInp) hiddenInp.value = '';
   if (fileInp) fileInp.value = '';
+  if (camInp) camInp.value = '';
+  if (galInp) galInp.value = '';
 }
 
 let currentProofUrl = '';
@@ -2077,13 +2085,14 @@ function calculateEditTxTotal() {
 }
 
 function handleEditTxPhotoSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const input = (e && e.target) ? e.target : e;
+  if (!input || !input.files || !input.files[0]) return;
+  const file = input.files[0];
 
   // Maximum 2MB limit on edit transaction photo
   if (file.size > 2 * 1024 * 1024) {
     alert('تصویر کا سائز 2MB سے زیادہ ہے! برائے مہربانی زیادہ سے زیادہ 2MB سائز کی تصویر منتخب کریں۔');
-    e.target.value = '';
+    input.value = '';
     return;
   }
 
@@ -2119,6 +2128,10 @@ function removeEditTxPhoto() {
   if (proofUrlInput) proofUrlInput.value = '';
   const fileInput = document.getElementById('edit-tx-file-input');
   if (fileInput) fileInput.value = '';
+  const camInput = document.getElementById('edit-tx-camera');
+  if (camInput) camInput.value = '';
+  const galInput = document.getElementById('edit-tx-gallery');
+  if (galInput) galInput.value = '';
   document.getElementById('edit-tx-photo-preview-wrap')?.classList.add('hidden');
   document.getElementById('btn-remove-edit-tx-photo')?.classList.add('hidden');
 }
@@ -2387,11 +2400,15 @@ function handleProductImageFile(input, mode) {
 function removeProductPhoto(mode) {
   const prefix = mode === 'inline' ? 'inline-' : '';
   const fileInput = document.getElementById(`${prefix}prod-file`);
+  const camInput = document.getElementById(`${prefix}prod-camera`);
+  const galInput = document.getElementById(`${prefix}prod-gallery`);
   const previewBox = document.getElementById(`${prefix}prod-preview-box`);
   const previewImg = document.getElementById(`${prefix}prod-preview-img`);
   const targetInput = document.getElementById(`${prefix}prod-image`);
 
   if (fileInput) fileInput.value = '';
+  if (camInput) camInput.value = '';
+  if (galInput) galInput.value = '';
   if (previewImg) previewImg.src = '';
   if (previewBox) previewBox.classList.add('hidden');
   if (targetInput) targetInput.value = '';
@@ -2999,7 +3016,11 @@ function removeShopLogo() {
     updateShopLogoPreviewUI('');
     applyShopLogo('');
     const fileInp = document.getElementById('shop-logo-file-input');
+    const camInp = document.getElementById('shop-logo-camera-input');
+    const galInp = document.getElementById('shop-logo-gallery-input');
     if (fileInp) fileInp.value = '';
+    if (camInp) camInp.value = '';
+    if (galInp) galInp.value = '';
   }
 }
 
