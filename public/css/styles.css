@@ -315,3 +315,63 @@ body {
   pointer-events: none;
   animation: float-particle linear infinite;
 }
+
+/* ==========================================
+   STRICT GLOBAL SITE HEADER LOGO SIZING & POSITIONING
+   Guarantees the logo NEVER overflows or blows up on mobile/desktop
+   ========================================== */
+.site-header-logo-box,
+.nav-logo-wrap,
+header a .w-13,
+header a .w-12,
+header a .w-11,
+header a .w-14 {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  max-width: 48px !important;
+  max-height: 48px !important;
+  flex-shrink: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+@media (min-width: 640px) {
+  .site-header-logo-box,
+  .nav-logo-wrap,
+  header a .w-13,
+  header a .w-12,
+  header a .w-11,
+  header a .w-14 {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    min-height: 54px !important;
+    max-width: 54px !important;
+    max-height: 54px !important;
+  }
+}
+
+.site-header-logo-box img,
+.nav-logo-wrap img,
+header a .w-13 img,
+header a .w-12 img,
+header a .w-11 img,
+header a .w-14 img,
+header a img[alt*="Logo"],
+header a img[alt*="لوگو"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 12px !important;
+}

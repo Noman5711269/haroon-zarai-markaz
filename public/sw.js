@@ -1,5 +1,5 @@
-// Haroon Zarai Markaz PWA Service Worker (v1.3.0)
-const CACHE_NAME = 'hzm-pwa-v1.3.0';
+// Haroon Zarai Markaz PWA Service Worker (v1.4.0)
+const CACHE_NAME = 'hzm-pwa-v1.4.0';
 
 // Core static assets to pre-cache for instant loading & basic offline capability
 const CORE_ASSETS = [
