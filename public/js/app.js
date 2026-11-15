@@ -91,7 +91,7 @@ function cleanTelNumber(raw) {
 
 function applyShopLogo(logoUrl) {
   const baseLogo = logoUrl || '/images/hzm-logo.jpg';
-  const versionedLogo = baseLogo.includes('?') ? baseLogo : (baseLogo + '?v=6');
+  const versionedLogo = baseLogo.includes('?') ? baseLogo : (baseLogo + '?v=8');
 
   // 1. Hero Animated Emblem (index.html, khata.html)
   const heroLogoContainers = document.querySelectorAll('.motion-logo-box > div, #hero-logo-container');
