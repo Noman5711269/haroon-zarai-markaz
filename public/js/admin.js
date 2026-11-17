@@ -24,6 +24,355 @@ function escapeJs(str) {
   return String(str).replace(/['"\\]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '');
 }
 
+// ========================================================
+// DEVICE LOCK SCREEN & BIOMETRICS (فنگر پرنٹ و فیس لاک سسٹم)
+// ========================================================
+
+const BIO_STORAGE_KEY = 'hzm_admin_biometrics_v2';
+const BIO_DISMISSED_KEY = 'hzm_admin_bio_prompt_dismissed';
+
+function bufferToBase64url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function base64urlToBuffer(base64url) {
+  let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+function getStoredBiometricData() {
+  try {
+    const raw = localStorage.getItem(BIO_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.credentialId && parsed.bioToken) return parsed;
+  } catch (e) {}
+  return null;
+}
+
+async function isPlatformBiometricsSupported() {
+  if (!window.PublicKeyCredential) return false;
+  if (!window.crypto || !window.crypto.getRandomValues) return false;
+  try {
+    if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function') {
+      return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    }
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+function getFriendlyDeviceName() {
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua)) return 'اینڈرائیڈ فون (Android)';
+  if (/iPad|iPhone|iPod/.test(ua)) return 'آئی فون / آئی پیڈ (iOS)';
+  if (/Macintosh|Mac OS X/.test(ua)) return 'ایپل میک بک (Mac)';
+  if (/Windows/i.test(ua)) return 'ونڈوز کمپیوٹر (Windows Hello)';
+  return 'پرسنل ڈیوائس (Device Lock)';
+}
+
+// 1. Update Biometric Login UI on Admin Login Screen
+async function updateBiometricLoginUI() {
+  const bioBox = document.getElementById('biometric-login-box');
+  if (!bioBox) return;
+
+  const data = getStoredBiometricData();
+  const supported = await isPlatformBiometricsSupported();
+
+  if (data && supported) {
+    bioBox.classList.remove('hidden');
+  } else {
+    bioBox.classList.add('hidden');
+  }
+}
+
+// 2. Handle Biometric Login with Native Screen Lock (Fingerprint / Face ID)
+async function handleBiometricLogin() {
+  const btn = document.getElementById('btn-biometric-login');
+  const errBox = document.getElementById('login-error');
+  if (errBox) errBox.classList.add('hidden');
+
+  const stored = getStoredBiometricData();
+  if (!stored) {
+    if (errBox) {
+      errBox.classList.remove('hidden');
+      errBox.innerText = 'اس ڈیوائس پر فنگر پرنٹ ڈیٹا موجود نہیں ہے۔ پہلے یوزر نیم اور پاس ورڈ سے لاگ ان کر کے فنگر پرنٹ کنیکٹ کریں۔';
+    }
+    return;
+  }
+
+  const supported = await isPlatformBiometricsSupported();
+  if (!supported) {
+    if (errBox) {
+      errBox.classList.remove('hidden');
+      errBox.innerText = 'اس ڈیوائس پر بائیومیٹرک اسکرین لاک دستیاب نہیں ہے۔ براہ کرم یوزر نیم اور پاس ورڈ سے لاگ ان کریں۔';
+    }
+    return;
+  }
+
+  const origBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-300"></i> <span>فنگر پرنٹ یا فیس لاک کی تصدیق کریں...</span>`;
+  }
+
+  try {
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+    const rawId = base64urlToBuffer(stored.credentialId);
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        rpId: window.location.hostname,
+        allowCredentials: [{
+          id: rawId,
+          type: 'public-key'
+        }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+
+    if (!assertion) {
+      throw new Error('اسکرین لاک تصدیق مکمل نہ ہو سکی۔');
+    }
+
+    const res = await fetch('/api/admin/biometric/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bioToken: stored.bioToken,
+        credentialId: stored.credentialId
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.setItem('adminToken', data.token);
+      if (data.adminName) {
+        const nameEl = document.getElementById('admin-welcome-name');
+        if (nameEl) nameEl.innerText = `${data.adminName} (ایڈمن)`;
+      }
+      checkAuthAndInit();
+    } else {
+      if (errBox) {
+        errBox.classList.remove('hidden');
+        errBox.innerText = data.message || 'فنگر پرنٹ تصدیق ناکام! براہ کرم یوزر نیم اور پاس ورڈ سے لاگ ان کریں۔';
+      }
+    }
+  } catch (err) {
+    console.warn('Biometric login error:', err);
+    if (errBox) {
+      errBox.classList.remove('hidden');
+      if (err.name === 'NotAllowedError') {
+        errBox.innerText = 'فنگر پرنٹ / اسکرین لاک کی تصدیق منسوخ کر دی گئی یا ٹائم آؤٹ ہو گئی۔ دوبارہ کوشش کریں یا نیچے پاس ورڈ سے لاگ ان کریں۔';
+      } else {
+        errBox.innerText = 'فنگر پرنٹ لاگ ان میں خرابی: ' + (err.message || 'براہ کرم یوزر نیم اور پاس ورڈ استعمال کریں۔');
+      }
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnHtml;
+    }
+  }
+}
+
+// 3. Trigger Biometric Enrollment (From Settings or Modal Prompt)
+async function triggerBiometricEnrollment(isFromSettings = false) {
+  const statusEl = isFromSettings 
+    ? document.getElementById('settings-bio-alert')
+    : document.getElementById('prompt-bio-status');
+  const btn = isFromSettings
+    ? document.getElementById('btn-settings-connect-bio')
+    : document.getElementById('btn-prompt-enroll-bio');
+
+  const setStatus = (msg, isSuccess = false) => {
+    if (!statusEl) return;
+    statusEl.classList.remove('hidden');
+    statusEl.className = isSuccess 
+      ? 'p-3 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-950 border border-emerald-400 block'
+      : 'p-3 rounded-xl text-xs font-bold bg-rose-100 text-rose-950 border border-rose-300 block';
+    statusEl.innerText = msg;
+  };
+
+  const supported = await isPlatformBiometricsSupported();
+  if (!supported) {
+    setStatus('افسوس! اس ڈیوائس یا براؤزر پر پلیٹ فارم بائیومیٹرک اسکرین لاک کی سہولت دستیاب نہیں ہے۔');
+    return;
+  }
+
+  const origBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>اسکرین لاک پر فنگر پرنٹ لگائیں...</span>`;
+  }
+
+  try {
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+
+    const userId = new Uint8Array(16);
+    window.crypto.getRandomValues(userId);
+
+    const devName = getFriendlyDeviceName();
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: {
+          name: "ہارون زرعی مرکز (HZM Admin)",
+          id: window.location.hostname
+        },
+        user: {
+          id: userId,
+          name: "HaroonZaraiMarkaz",
+          displayName: "میاں ہارون رشید (ایڈمن)"
+        },
+        pubKeyCredParams: [
+          { type: "public-key", alg: -7 },   // ES256
+          { type: "public-key", alg: -257 }  // RS256
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+          residentKey: "preferred"
+        },
+        timeout: 60000
+      }
+    });
+
+    if (!credential || !credential.rawId) {
+      throw new Error('ڈیوائس کریڈینشل حاصل نہ ہو سکا۔');
+    }
+
+    const credentialId = bufferToBase64url(credential.rawId);
+
+    const res = await adminFetch('/api/admin/biometric/enroll', {
+      method: 'POST',
+      body: JSON.stringify({
+        credentialId: credentialId,
+        deviceName: devName
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      localStorage.setItem(BIO_STORAGE_KEY, JSON.stringify({
+        credentialId: credentialId,
+        bioToken: data.bioToken,
+        deviceName: devName,
+        enrolledAt: Date.now()
+      }));
+
+      setStatus('✅ مبارک ہو! آپ کی اس ڈیوائس کا فنگر پرنٹ / فیس لاک ایڈمن پورٹل کے ساتھ کامیابی سے منسلک ہو گیا ہے۔', true);
+      updateBiometricSettingsUI();
+      updateBiometricLoginUI();
+
+      if (!isFromSettings) {
+        setTimeout(() => {
+          dismissBiometricPrompt();
+        }, 1800);
+      }
+    } else {
+      setStatus(data.message || 'سرور پر بائیومیٹرک رجسٹریشن ناکام رہی۔');
+    }
+  } catch (err) {
+    console.warn('Biometric enrollment error:', err);
+    if (err.name === 'NotAllowedError') {
+      setStatus('فنگر پرنٹ اسکیننگ کینسل کر دی گئی۔ آپ جب چاہیں دوبارہ کنیکٹ کر سکتے ہیں۔');
+    } else {
+      setStatus('بائیومیٹرک کنکشن میں خرابی: ' + (err.message || 'نامعلوم مسئلہ۔'));
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnHtml;
+    }
+  }
+}
+
+// 4. Enroll from Prompt Modal
+function enrollBiometricsFromPrompt() {
+  triggerBiometricEnrollment(false);
+}
+
+function dismissBiometricPrompt() {
+  const modal = document.getElementById('modal-biometric-prompt');
+  if (modal) modal.classList.add('hidden');
+  sessionStorage.setItem(BIO_DISMISSED_KEY, 'true');
+}
+
+// 5. Disconnect Biometrics
+async function disconnectBiometrics() {
+  if (!confirm('کیا آپ واقعی اس ڈیوائس سے فنگر پرنٹ اور فیس لاک کنیکٹ ختم کرنا چاہتے ہیں؟\nختم کرنے کے بعد آپ کو دوبارہ لاگ ان کے لیے یوزر نیم اور پاس ورڈ درج کرنا پڑے گا۔')) {
+    return;
+  }
+
+  const stored = getStoredBiometricData();
+  if (stored && stored.credentialId) {
+    try {
+      await adminFetch('/api/admin/biometric/revoke', {
+        method: 'POST',
+        body: JSON.stringify({ credentialId: stored.credentialId })
+      });
+    } catch (e) {}
+  }
+
+  localStorage.removeItem(BIO_STORAGE_KEY);
+  updateBiometricSettingsUI();
+  updateBiometricLoginUI();
+
+  const alertBox = document.getElementById('settings-bio-alert');
+  if (alertBox) {
+    alertBox.classList.remove('hidden');
+    alertBox.className = 'p-3 rounded-xl text-xs font-bold bg-amber-100 text-amber-950 border border-amber-300 block';
+    alertBox.innerText = 'فنگر پرنٹ اور فیس لاک کنکشن اس ڈیوائس سے کامیابی کے ساتھ ہٹا دیا گیا ہے۔';
+    setTimeout(() => alertBox.classList.add('hidden'), 4000);
+  }
+}
+
+// 6. Update Settings Tab Biometric Section UI
+async function updateBiometricSettingsUI() {
+  const badgeEl = document.getElementById('biometric-status-badge');
+  const disconnectBtn = document.getElementById('btn-settings-disconnect-bio');
+  const connectBtnText = document.getElementById('btn-settings-connect-bio-text');
+  if (!badgeEl) return;
+
+  const stored = getStoredBiometricData();
+  const supported = await isPlatformBiometricsSupported();
+
+  if (!supported) {
+    badgeEl.innerHTML = `<span class="bg-gray-200 text-gray-700 font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1"><i class="fa-solid fa-ban text-gray-500"></i> ڈیوائس پر دستیاب نہیں</span>`;
+    if (disconnectBtn) disconnectBtn.classList.add('hidden');
+    if (connectBtnText) connectBtnText.innerText = 'اس ڈیوائس پر اسکرین لاک سپورٹ نہیں ہے';
+    return;
+  }
+
+  if (stored) {
+    badgeEl.innerHTML = `<span class="bg-emerald-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-2xs"><i class="fa-solid fa-circle-check"></i> فعال ہے (Connected)</span>`;
+    if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+    if (connectBtnText) connectBtnText.innerText = 'دوبارہ کنیکٹ کریں (Re-enroll)';
+  } else {
+    badgeEl.innerHTML = `<span class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1"><i class="fa-solid fa-circle-exclamation text-amber-600"></i> غیر منسلک (Not Connected)</span>`;
+    if (disconnectBtn) disconnectBtn.classList.add('hidden');
+    if (connectBtnText) connectBtnText.innerText = 'اس ڈیوائس کا فنگر پرنٹ / فیس لاک کنیکٹ کریں';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Pre-load public settings to display custom shop logo on login screen
   fetch('/api/settings').then(r => r.json()).then(s => {
@@ -31,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }).catch(() => {});
 
   checkAuthAndInit();
+  updateBiometricLoginUI();
   setupAdminForms();
 });
 
@@ -55,6 +405,7 @@ function checkAuthAndInit() {
   } else {
     loginScreen.classList.remove('hidden');
     dashboardApp.classList.add('hidden');
+    updateBiometricLoginUI();
   }
 }
 
@@ -142,6 +493,18 @@ if (adminLoginForm) {
           if (nameEl) nameEl.innerText = `${data.adminName} (ایڈمن)`;
         }
         checkAuthAndInit();
+
+        // First-time check: If device supports biometrics and not yet connected, prompt admin to connect screen lock
+        const storedBio = getStoredBiometricData();
+        const dismissed = sessionStorage.getItem(BIO_DISMISSED_KEY);
+        isPlatformBiometricsSupported().then(supported => {
+          if (!storedBio && supported && !dismissed) {
+            setTimeout(() => {
+              const modal = document.getElementById('modal-biometric-prompt');
+              if (modal) modal.classList.remove('hidden');
+            }, 600);
+          }
+        });
       } else {
         if (errBox) {
           errBox.classList.remove('hidden');
@@ -3057,6 +3420,9 @@ async function loadAdminSettings() {
         updateShopLogoPreviewUI(s.shopLogo || '');
       }
       applyShopLogo(s.shopLogo || '');
+
+      // Load active Biometrics & Screen Lock status
+      updateBiometricSettingsUI();
     }
   } catch (err) {
     console.error('Settings load error:', err);

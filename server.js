@@ -485,6 +485,127 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, message: 'ایڈمن کامیابی سے لاگ آؤٹ ہو گیا۔' });
       }
 
+      // 1.2 Admin Biometric / Lock Screen Enrollment (Requires active admin session)
+      if (pathname === '/api/admin/biometric/enroll' && method === 'POST') {
+        if (!checkAdminAuth(req)) {
+          return sendJson(res, 401, { success: false, message: 'غیر مجاز درخواست: پہلے ایڈمن یوزر نیم اور پاس ورڈ سے لاگ ان کریں۔' });
+        }
+        const body = await parseJsonBody(req);
+        const credentialId = String(body.credentialId || '').trim();
+        const deviceName = String(body.deviceName || 'Admin Device').trim();
+        if (!credentialId) {
+          return sendJson(res, 400, { success: false, message: 'کریڈینشل شناختی نمبر درکار ہے۔' });
+        }
+
+        const now = Date.now();
+        const payload = {
+          sub: 'admin_biometric',
+          cid: credentialId,
+          dev: deviceName,
+          iat: now,
+          exp: now + 365 * 24 * 60 * 60 * 1000 // 1 year validity
+        };
+        const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+        const hmac = crypto.createHmac('sha256', AUTH_SECRET).update(`bio_${payloadB64}`).digest('base64url');
+        const bioToken = `hzmbio_${payloadB64}.${hmac}`;
+
+        try {
+          let settings;
+          try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
+          const list = Array.isArray(settings?.biometricDevices) ? settings.biometricDevices : [];
+          const filtered = list.filter(d => d.cid !== credentialId);
+          filtered.push({ cid: credentialId, dev: deviceName, enrolledAt: now });
+          await db.updateSettings({ biometricDevices: filtered.slice(-10) });
+        } catch (e) {
+          console.warn('Biometric device storage warning:', e.message);
+        }
+
+        return sendJson(res, 200, {
+          success: true,
+          bioToken,
+          message: 'ڈیوائس اسکرین لاک / فنگر پرنٹ کامیابی سے ایڈمن پورٹل کے ساتھ منسلک ہو گیا۔'
+        });
+      }
+
+      // 1.3 Admin Biometric / Lock Screen Login
+      if (pathname === '/api/admin/biometric/login' && method === 'POST') {
+        const clientIp = getClientIp(req);
+        const rateCheck = isRateLimited('admin_bio_' + clientIp, 5, 15 * 60 * 1000, 15 * 60 * 1000);
+        if (rateCheck.limited) {
+          return sendJson(res, 429, {
+            success: false,
+            message: `سیکیورٹی وارننگ: لگاتار غلط فنگر پرنٹ کوششوں کی بنا پر بائیومیٹرک لاگ ان 15 منٹ کے لیے بند ہے۔ آپ یوزر نیم اور پاس ورڈ سے لاگ ان کر سکتے ہیں۔`,
+            retryAfter: rateCheck.retryAfterSec
+          });
+        }
+
+        const body = await parseJsonBody(req);
+        const bioToken = String(body.bioToken || '').trim();
+        const credentialId = String(body.credentialId || '').trim();
+
+        if (!bioToken || !bioToken.startsWith('hzmbio_')) {
+          return sendJson(res, 400, { success: false, message: 'غلط یا نامکمل بائیومیٹرک ٹوکن!' });
+        }
+
+        const raw = bioToken.slice('hzmbio_'.length);
+        const dotIdx = raw.indexOf('.');
+        if (dotIdx === -1) {
+          return sendJson(res, 400, { success: false, message: 'ناقص سیکیورٹی ٹوکن!' });
+        }
+
+        const payloadB64 = raw.slice(0, dotIdx);
+        const sig = raw.slice(dotIdx + 1);
+        const expectedSig = crypto.createHmac('sha256', AUTH_SECRET).update(`bio_${payloadB64}`).digest('base64url');
+
+        if (sig.length !== expectedSig.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+          recordFailedLogin('admin_bio_' + clientIp, 5, 15 * 60 * 1000);
+          return sendJson(res, 401, { success: false, message: 'غیر تصدیق شدہ فنگر پرنٹ ٹوکن! سیکیورٹی تصدیق ناکام۔' });
+        }
+
+        let payload;
+        try {
+          payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+        } catch (e) {
+          return sendJson(res, 400, { success: false, message: 'ناقص ٹوکن فارمیٹ!' });
+        }
+
+        if (payload.exp && Date.now() > payload.exp) {
+          return sendJson(res, 401, { success: false, message: 'فنگر پرنٹ کنکشن کی مدت ختم ہو چکی ہے۔ براہ کرم پاس ورڈ سے لاگ ان کر کے دوبارہ کنیکٹ کریں۔' });
+        }
+
+        if (credentialId && payload.cid && credentialId !== payload.cid) {
+          return sendJson(res, 401, { success: false, message: 'ڈیوائس کریڈینشل مماثل نہیں ہے۔' });
+        }
+
+        clearFailedLogins('admin_bio_' + clientIp);
+        const token = createAdminSession(clientIp);
+
+        let settings;
+        try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
+
+        return sendJson(res, 200, {
+          success: true,
+          token,
+          method: 'Device Lock Screen (Fingerprint / Face ID)',
+          message: 'خوش آمدید! فنگر پرنٹ / اسکرین لاک کے ذریعے لاگ ان کامیاب رہا۔',
+          adminName: (settings && settings.ownerName) || 'میاں ہارون رشید'
+        });
+      }
+
+      // 1.4 Admin Biometric Revoke
+      if (pathname === '/api/admin/biometric/revoke' && method === 'POST') {
+        const body = await parseJsonBody(req);
+        const credentialId = String(body.credentialId || '').trim();
+        try {
+          let settings;
+          try { settings = await db.getSettings(); } catch(e) { settings = localDb.getSettings(); }
+          const list = Array.isArray(settings?.biometricDevices) ? settings.biometricDevices : [];
+          const filtered = credentialId ? list.filter(d => d.cid !== credentialId) : [];
+          await db.updateSettings({ biometricDevices: filtered });
+        } catch (e) {}
+        return sendJson(res, 200, { success: true, message: 'فنگر پرنٹ کنکشن کامیابی سے منسوخ کر دیا گیا۔' });
+      }
+
       // 2. Settings
       if (pathname === '/api/settings') {
         if (method === 'GET') {

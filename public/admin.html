@@ -94,6 +94,31 @@
         </div>
       </div>
 
+      <!-- Error Alert Box -->
+      <div id="login-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border-2 border-rose-300 text-rose-800 text-xs font-bold text-center"></div>
+
+      <!-- Quick Biometric Login Card (Shown when device lock screen is connected) -->
+      <div id="biometric-login-box" class="hidden mb-5 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 border-2 border-emerald-400 text-center shadow-md">
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 text-white flex items-center justify-center text-xl shadow-md mb-2">
+          <i class="fa-solid fa-fingerprint animate-pulse text-amber-300"></i>
+        </div>
+        <h3 class="text-sm font-black text-gray-900 font-urdu">فنگر پرنٹ / فیس لاک منسلک ہے</h3>
+        <p class="text-[11px] text-emerald-800 font-medium mb-3">اسکرین لاک یا فنگر پرنٹ کی تصدیق سے فوری لاگ ان کریں</p>
+        <button 
+          type="button" 
+          id="btn-biometric-login"
+          onclick="handleBiometricLogin()"
+          class="w-full bg-gradient-to-r from-emerald-600 via-teal-700 to-brand-800 hover:from-emerald-700 hover:to-teal-900 text-white font-black py-3 rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <i class="fa-solid fa-fingerprint text-amber-300 text-base"></i>
+          <span>فنگر پرنٹ / فیس لاک سے لاگ ان کریں</span>
+        </button>
+        <div class="relative my-3">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-emerald-200"></div></div>
+          <div class="relative flex justify-center text-[10px]"><span class="bg-gradient-to-br from-emerald-50 to-green-50 px-2 text-gray-500 font-bold">یا نیچے یوزر نیم اور پاس ورڈ سے لاگ ان کریں</span></div>
+        </div>
+      </div>
+
       <!-- ADMIN LOGIN FORM (USERNAME & PASSWORD ONLY) -->
       <form id="admin-login-form" class="space-y-4 text-right">
         
@@ -2024,12 +2049,52 @@
                 </div>
                 <div>
                   <h4 class="text-xs font-bold text-gray-900">سیکیورٹی پروٹیکشن سسٹم</h4>
-                  <p class="text-[11px] text-gray-600">صرف مجاز یوزر نیم اور پاس ورڈ (Username & Password) کے ذریعے لاگ ان فعال ہے۔</p>
+                  <p class="text-[11px] text-gray-600">مجاز یوزر نیم اور پاس ورڈ (Username & Password) اور ڈیوائس اسکرین لاک فعال ہے۔</p>
                 </div>
               </div>
               <span class="bg-emerald-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1">
                 <i class="fa-solid fa-circle-check"></i> محفوظ ہے (Active)
               </span>
+            </div>
+
+            <!-- ================= DEVICE LOCK SCREEN & BIOMETRICS (فنگر پرنٹ و فیس لاک) ================= -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-yellow-50/80 border-2 border-amber-300 space-y-3">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-agroorange-600 text-white flex items-center justify-center text-2xl shadow-md">
+                    <i class="fa-solid fa-fingerprint"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm sm:text-base font-black text-gray-900 font-urdu">ڈیوائس اسکرین لاک و فنگر پرنٹ (Biometric / Face ID Lock)</h3>
+                    <p class="text-[11px] text-gray-600">اس ڈیوائس کے فنگر پرنٹ یا فیس لاک کو ایڈمن لاگ ان کے ساتھ منسلک کریں تاکہ آئندہ پاس ورڈ کے بغیر فوری لاگ ان ہو سکے۔</p>
+                  </div>
+                </div>
+                <div id="biometric-status-badge">
+                  <!-- Dynamically rendered (Connected or Not Connected) -->
+                </div>
+              </div>
+
+              <div class="pt-2 flex flex-wrap items-center gap-2">
+                <button 
+                  type="button" 
+                  id="btn-settings-connect-bio"
+                  onclick="triggerBiometricEnrollment(true)"
+                  class="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <i class="fa-solid fa-fingerprint text-amber-300"></i>
+                  <span id="btn-settings-connect-bio-text">اس ڈیوائس کا فنگر پرنٹ / فیس لاک کنیکٹ کریں</span>
+                </button>
+                <button 
+                  type="button" 
+                  id="btn-settings-disconnect-bio"
+                  onclick="disconnectBiometrics()"
+                  class="hidden bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <i class="fa-solid fa-trash-can"></i>
+                  <span>فنگر پرنٹ کنکشن ختم کریں (Disconnect)</span>
+                </button>
+              </div>
+              <div id="settings-bio-alert" class="hidden p-3 rounded-xl text-xs font-bold"></div>
             </div>
 
             <!-- ================= URDU FONT SELECTION & LIVE PREVIEW ================= -->
@@ -3403,8 +3468,42 @@
     </div>
   </div>
 
-  <script src="/js/admin.js?v=8"></script>
+  <!-- Modal: First-Time Biometric Connect Prompt -->
+  <div id="modal-biometric-prompt" class="hidden fixed inset-0 z-[60] bg-brand-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border-2 border-emerald-400 text-center relative" dir="rtl">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-700 text-white flex items-center justify-center text-3xl shadow-xl shadow-emerald-600/30 mb-3">
+        <i class="fa-solid fa-fingerprint text-amber-300"></i>
+      </div>
+      <h3 class="text-lg font-black text-gray-900 font-urdu mb-1">فنگر پرنٹ یا فیس لاک منسلک کریں؟</h3>
+      <p class="text-xs text-gray-600 leading-relaxed mb-4">
+        کیا آپ اس ڈیوائس کے اسکرین لاک / فنگر پرنٹ کو ایڈمن پورٹل سے جوڑنا چاہتے ہیں؟
+        <br><strong class="text-emerald-800">آئندہ آپ کو بار بار پاس ورڈ نہیں لکھنا پڑے گا، صرف فنگر پرنٹ یا فیس لاک سے لاگ ان ہو سکے گا۔</strong>
+      </p>
+
+      <div class="space-y-2">
+        <button 
+          type="button" 
+          onclick="enrollBiometricsFromPrompt()"
+          id="btn-prompt-enroll-bio"
+          class="w-full bg-gradient-to-r from-emerald-600 via-teal-700 to-brand-800 hover:from-emerald-700 hover:to-teal-900 text-white font-black py-3.5 rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <i class="fa-solid fa-fingerprint text-amber-300"></i>
+          <span>ہاں، فنگر پرنٹ / فیس لاک کنیکٹ کریں</span>
+        </button>
+        <button 
+          type="button" 
+          onclick="dismissBiometricPrompt()"
+          class="w-full py-2.5 text-xs font-bold text-gray-500 hover:text-gray-800 rounded-xl transition cursor-pointer"
+        >
+          بعد میں (Later)
+        </button>
+      </div>
+      <div id="prompt-bio-status" class="hidden mt-3 p-2.5 rounded-xl text-xs font-bold"></div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js?v=9"></script>
   <!-- PWA Service Worker & Install Prompt Manager -->
-  <script src="/js/pwa.js?v=8" defer></script>
+  <script src="/js/pwa.js?v=9" defer></script>
 </body>
 </html>
