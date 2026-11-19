@@ -2133,8 +2133,8 @@ function openComplaintModal() {
 
   // Pre-fill with session farmer info if available
   if (currentLoadedFarmer) {
-    const nameInput = document.getElementById('cmp-farmer-name');
-    const mobileInput = document.getElementById('cmp-farmer-mobile');
+    const nameInput = document.getElementById('cmp-name') || document.getElementById('cmp-farmer-name');
+    const mobileInput = document.getElementById('cmp-phone') || document.getElementById('cmp-farmer-mobile');
     if (nameInput && !nameInput.value) nameInput.value = currentLoadedFarmer.name || '';
     if (mobileInput && !mobileInput.value) mobileInput.value = currentLoadedFarmer.mobile || '';
   }
@@ -2216,17 +2216,22 @@ function removeComplaintImage() {
 
 async function handleComplaintSubmit(e) {
   if (e) e.preventDefault();
-  const farmerName = document.getElementById('cmp-farmer-name')?.value.trim();
-  const mobile = document.getElementById('cmp-farmer-mobile')?.value.trim();
-  const category = document.getElementById('cmp-category')?.value;
-  const message = document.getElementById('cmp-message')?.value.trim();
+  const nameEl = document.getElementById('cmp-name') || document.getElementById('cmp-farmer-name');
+  const phoneEl = document.getElementById('cmp-phone') || document.getElementById('cmp-farmer-mobile');
+  const msgEl = document.getElementById('cmp-message');
+  const categoryEl = document.getElementById('cmp-category');
+
+  const farmerName = nameEl ? nameEl.value.trim() : '';
+  const mobile = phoneEl ? phoneEl.value.trim() : '';
+  const category = categoryEl ? categoryEl.value : 'عام شکایت';
+  const message = msgEl ? msgEl.value.trim() : '';
 
   if (!farmerName || !mobile || !message) {
     alert('براہ کرم اپنا نام، موبائل نمبر اور شکایت کی تفصیل لازمی درج کریں۔');
     return;
   }
 
-  const btn = document.getElementById('btn-submit-complaint');
+  const btn = document.getElementById('cmp-submit-btn') || document.getElementById('btn-submit-complaint');
   const origHtml = btn ? btn.innerHTML : '';
   if (btn) {
     btn.disabled = true;
@@ -2238,6 +2243,7 @@ async function handleComplaintSubmit(e) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        farmerId: currentLoadedFarmer ? currentLoadedFarmer.id : '',
         farmerName,
         mobile,
         category,
@@ -2254,7 +2260,7 @@ async function handleComplaintSubmit(e) {
 
     alert('آپ کی شکایت / رسید کا تصویری ثبوت کامیابی سے جمع ہو گیا ہے۔ ہارون زرعی مرکز کسٹمر سپورٹ ٹیم اس پر فوری کارروائی کرے گی۔ شکریہ!');
     closeComplaintModal();
-    const form = document.getElementById('form-complaint');
+    const form = document.getElementById('form-farmer-complaint') || document.getElementById('form-complaint');
     if (form) form.reset();
     removeComplaintImage();
 
