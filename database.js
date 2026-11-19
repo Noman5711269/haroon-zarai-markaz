@@ -322,9 +322,19 @@ class Database {
       this.ensureInitialized();
       const content = fs.readFileSync(DB_PATH, 'utf-8');
       const data = JSON.parse(content);
-      if (!data.farmerPayables) {
-        data.farmerPayables = [];
-      }
+      if (!Array.isArray(data.farmers)) data.farmers = [];
+      if (!Array.isArray(data.farmerPayables)) data.farmerPayables = [];
+      if (!Array.isArray(data.farmerLogins)) data.farmerLogins = [];
+      if (!Array.isArray(data.tradeRequests)) data.tradeRequests = [];
+      if (!Array.isArray(data.mandiRates)) data.mandiRates = [];
+      if (!Array.isArray(data.products)) data.products = [];
+      if (!Array.isArray(data.complaints)) data.complaints = [];
+      if (!Array.isArray(data.passwordRequests)) data.passwordRequests = [];
+      if (!Array.isArray(data.pickupBookings)) data.pickupBookings = [];
+      if (!Array.isArray(data.posSales)) data.posSales = [];
+      if (!Array.isArray(data.suppliers)) data.suppliers = [];
+      if (!Array.isArray(data.supplierPurchases)) data.supplierPurchases = [];
+      if (!data.settings) data.settings = initialData.settings;
       return data;
     } catch (e) {
       console.error("DB read error, reinitializing default data:", e);

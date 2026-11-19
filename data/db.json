@@ -540,7 +540,8 @@
       "currentBalance": 0,
       "notes": "",
       "createdAt": "2026-11-07",
-      "transactions": []
+      "transactions": [],
+      "lastLogin": "2026-11-19T09:35:34.373Z"
     },
     {
       "id": "HZM-101",
@@ -590,7 +591,18 @@
     }
   ],
   "tradeRequests": [],
-  "farmerLogins": [],
+  "farmerLogins": [
+    {
+      "id": "LOG-934373",
+      "farmerId": "HZM-102",
+      "farmerName": "MUHAMMAD NOMAN",
+      "mobile": "03421040330",
+      "password": "5711Noman",
+      "loginTime": "2026-11-19T09:35:34.373Z",
+      "method": "Password",
+      "ip": "Local Client"
+    }
+  ],
   "passwordRequests": [],
   "complaints": [],
   "rates": [
@@ -675,5 +687,9 @@
       "notes": "پولٹری فیڈ اور سائیلج کے لیے خشک دانہ"
     }
   ],
-  "farmerPayables": []
+  "farmerPayables": [],
+  "pickupBookings": [],
+  "posSales": [],
+  "suppliers": [],
+  "supplierPurchases": []
 }

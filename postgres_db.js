@@ -66,7 +66,13 @@ class PostgresDB {
     this.pool = new Pool(poolConfig);
 
     this.pool.on('error', (err) => {
-      console.error('Unexpected Supabase PG client error:', err.message);
+      console.error('Unexpected Supabase PG client error:', err ? err.message : err);
+    });
+
+    this.pool.on('connect', (client) => {
+      client.on('error', (err) => {
+        console.warn('PG Client error caught safely:', err ? err.message : err);
+      });
     });
   }
 
@@ -75,9 +81,14 @@ class PostgresDB {
       return await this.pool.query(text, params);
     } catch (err) {
       const msg = (err && err.message) || '';
-      if (msg.includes('Connection terminated') || msg.includes('timeout') || msg.includes('ECONNRESET') || msg.includes('closed')) {
+      if (msg.includes('Connection terminated') || msg.includes('timeout') || msg.includes('ECONNRESET') || msg.includes('closed') || msg.includes('Connection reset')) {
         console.warn('Supabase PG transient error, retrying query once...', msg);
-        return await this.pool.query(text, params);
+        try {
+          return await this.pool.query(text, params);
+        } catch (retryErr) {
+          console.error('Supabase PG query retry failed:', retryErr.message);
+          throw retryErr;
+        }
       }
       throw err;
     }
@@ -457,97 +468,118 @@ class PostgresDB {
 
   // --- 4. Farmers & Khata Management ---
   async getFarmers(search) {
-    const fRes = await this.query('SELECT * FROM farmers ORDER BY id DESC');
-    const tRes = await this.query('SELECT * FROM transactions ORDER BY date ASC, created_at ASC');
+    try {
+      const fRes = await this.query('SELECT * FROM farmers ORDER BY id DESC');
+      let tRows = [];
+      try {
+        const tRes = await this.query('SELECT * FROM transactions ORDER BY date ASC, created_at ASC');
+        tRows = tRes.rows || [];
+      } catch (txErr) {
+        console.warn('transactions fetch warning in getFarmers:', txErr.message);
+      }
 
-    const txMap = {};
-    for (const t of tRes.rows) {
-      if (!txMap[t.farmer_id]) txMap[t.farmer_id] = [];
-      txMap[t.farmer_id].push({
-        id: t.id,
-        date: t.date,
-        type: t.type,
-        category: t.category,
-        productName: t.product_name,
-        quantity: t.quantity,
-        unitPrice: Number(t.unit_price) || 0,
-        description: t.description,
-        amount: Number(t.amount) || 0,
-        balanceAfter: Number(t.balance_after) || 0,
-        addedBy: t.added_by,
-        proofImage: t.proof_image || ""
-      });
+      const txMap = {};
+      for (const t of tRows) {
+        if (!txMap[t.farmer_id]) txMap[t.farmer_id] = [];
+        txMap[t.farmer_id].push({
+          id: t.id,
+          date: t.date,
+          type: t.type,
+          category: t.category,
+          productName: t.product_name,
+          quantity: t.quantity,
+          unitPrice: Number(t.unit_price) || 0,
+          description: t.description,
+          amount: Number(t.amount) || 0,
+          balanceAfter: Number(t.balance_after) || 0,
+          addedBy: t.added_by,
+          proofImage: t.proof_image || ""
+        });
+      }
+
+      let farmers = fRes.rows.map(f => ({
+        id: f.id,
+        name: f.name,
+        nameEn: f.name_en,
+        fatherName: f.father_name,
+        mobile: f.mobile,
+        cnic: f.cnic,
+        email: f.email || "",
+        password: f.password || "",
+        registered: Boolean(f.registered || f.password),
+        village: f.village,
+        landAcres: Number(f.land_acres) || 0,
+        currentBalance: Number(f.current_balance) || 0,
+        notes: f.notes,
+        createdAt: f.created_at,
+        transactions: txMap[f.id] || []
+      }));
+
+      if (search && search.trim()) {
+        const q = search.toLowerCase().trim();
+        farmers = farmers.filter(f => 
+          (f.name && f.name.toLowerCase().includes(q)) ||
+          (f.nameEn && f.nameEn.toLowerCase().includes(q)) ||
+          (f.mobile && f.mobile.includes(q)) ||
+          (f.village && f.village.toLowerCase().includes(q)) ||
+          (f.id && f.id.toLowerCase().includes(q))
+        );
+      }
+      return farmers;
+    } catch (err) {
+      console.warn('Postgres getFarmers error, fallback to localDb:', err.message);
+      return localDb.getFarmers(search);
     }
-
-    let farmers = fRes.rows.map(f => ({
-      id: f.id,
-      name: f.name,
-      nameEn: f.name_en,
-      fatherName: f.father_name,
-      mobile: f.mobile,
-      cnic: f.cnic,
-      email: f.email || "",
-      password: f.password || "",
-      registered: Boolean(f.registered),
-      village: f.village,
-      landAcres: Number(f.land_acres) || 0,
-      currentBalance: Number(f.current_balance) || 0,
-      notes: f.notes,
-      createdAt: f.created_at,
-      transactions: txMap[f.id] || []
-    }));
-
-    if (search && search.trim()) {
-      const q = search.toLowerCase().trim();
-      farmers = farmers.filter(f => 
-        (f.name && f.name.toLowerCase().includes(q)) ||
-        (f.nameEn && f.nameEn.toLowerCase().includes(q)) ||
-        (f.mobile && f.mobile.includes(q)) ||
-        (f.village && f.village.toLowerCase().includes(q)) ||
-        (f.id && f.id.toLowerCase().includes(q))
-      );
-    }
-    return farmers;
   }
 
   async getFarmerById(id) {
-    const fRes = await this.query('SELECT * FROM farmers WHERE id = $1', [id]);
-    if (fRes.rows.length === 0) return null;
-    const f = fRes.rows[0];
+    try {
+      const fRes = await this.query('SELECT * FROM farmers WHERE id = $1', [id]);
+      if (fRes.rows.length === 0) return localDb.getFarmerById(id);
+      const f = fRes.rows[0];
 
-    const tRes = await this.query('SELECT * FROM transactions WHERE farmer_id = $1 ORDER BY date ASC, created_at ASC', [id]);
-    const transactions = tRes.rows.map(t => ({
-      id: t.id,
-      date: t.date,
-      type: t.type,
-      category: t.category,
-      productName: t.product_name,
-      quantity: t.quantity,
-      unitPrice: Number(t.unit_price) || 0,
-      description: t.description,
-      amount: Number(t.amount) || 0,
-      balanceAfter: Number(t.balance_after) || 0,
-      addedBy: t.added_by,
-      proofImage: t.proof_image || ""
-    }));
+      let transactions = [];
+      try {
+        const tRes = await this.query('SELECT * FROM transactions WHERE farmer_id = $1 ORDER BY date ASC, created_at ASC', [id]);
+        transactions = tRes.rows.map(t => ({
+          id: t.id,
+          date: t.date,
+          type: t.type,
+          category: t.category,
+          productName: t.product_name,
+          quantity: t.quantity,
+          unitPrice: Number(t.unit_price) || 0,
+          description: t.description,
+          amount: Number(t.amount) || 0,
+          balanceAfter: Number(t.balance_after) || 0,
+          addedBy: t.added_by,
+          proofImage: t.proof_image || ""
+        }));
+      } catch (txErr) {
+        console.warn('transactions error in getFarmerById:', txErr.message);
+      }
 
-    return {
-      id: f.id,
-      name: f.name,
-      nameEn: f.name_en,
-      fatherName: f.father_name,
-      mobile: f.mobile,
-      cnic: f.cnic,
-      email: f.email || "",
-      password: f.password || "",
-      registered: Boolean(f.registered),
-      village: f.village,
-      landAcres: Number(f.land_acres) || 0,
-      currentBalance: Number(f.current_balance) || 0,
-      notes: f.notes,
-      createdAt: f.created_at,
-      transactions
-    };
+      return {
+        id: f.id,
+        name: f.name,
+        nameEn: f.name_en,
+        fatherName: f.father_name,
+        mobile: f.mobile,
+        cnic: f.cnic,
+        email: f.email || "",
+        password: f.password || "",
+        registered: Boolean(f.registered || f.password),
+        village: f.village,
+        landAcres: Number(f.land_acres) || 0,
+        currentBalance: Number(f.current_balance) || 0,
+        notes: f.notes,
+        createdAt: f.created_at,
+        transactions
+      };
+    } catch (err) {
+      console.warn('Postgres getFarmerById error, fallback to localDb:', err.message);
+      return localDb.getFarmerById(id);
+    }
   }
 
   // Helper: Strictly and safely match farmer by ID, Mobile, CNIC or Email
@@ -590,8 +622,14 @@ class PostgresDB {
 
   async findFarmerByPhoneOrId(query) {
     if (!query) return null;
-    const farmers = await this.getFarmers();
-    return farmers.find(f => this.matchFarmer(f, query)) || null;
+    try {
+      const farmers = await this.getFarmers();
+      const matched = (farmers || []).find(f => this.matchFarmer(f, query));
+      if (matched) return matched;
+      return localDb.findFarmerByPhoneOrId(query);
+    } catch (e) {
+      return localDb.findFarmerByPhoneOrId(query);
+    }
   }
 
   async addFarmer(farmerData) {
@@ -806,9 +844,32 @@ class PostgresDB {
     return { farmer: updatedFarmer, transaction: savedTx };
   }
 
+  // --- Farmer Login Activity Table ---
+  async ensureFarmerLoginsTable() {
+    if (this._ensuredFarmerLoginsTable) return;
+    try {
+      await this.query(`
+        CREATE TABLE IF NOT EXISTS farmer_logins (
+          id SERIAL PRIMARY KEY,
+          farmer_id VARCHAR(50),
+          farmer_name VARCHAR(255),
+          mobile VARCHAR(50),
+          login_time TIMESTAMPTZ DEFAULT NOW(),
+          ip_address VARCHAR(100),
+          method VARCHAR(50)
+        );
+        CREATE INDEX IF NOT EXISTS idx_farmer_logins_time ON farmer_logins(login_time);
+      `);
+      this._ensuredFarmerLoginsTable = true;
+    } catch (e) {
+      console.warn('ensureFarmerLoginsTable notice:', e.message);
+    }
+  }
+
   // Automatically purge farmer login activity records older than 3 days
   async cleanOldFarmerLogins() {
     try {
+      await this.ensureFarmerLoginsTable();
       await this.query(`DELETE FROM farmer_logins WHERE login_time < NOW() - INTERVAL '3 days'`);
       return true;
     } catch (e) {
@@ -820,6 +881,7 @@ class PostgresDB {
   // Clear all farmer login activity logs
   async clearAllFarmerLogins() {
     try {
+      await this.ensureFarmerLoginsTable();
       await this.query(`DELETE FROM farmer_logins`);
       return true;
     } catch (e) {
@@ -831,6 +893,7 @@ class PostgresDB {
   // Record Farmer Login Activity for Admin
   async recordFarmerLogin(loginData) {
     try {
+      await this.ensureFarmerLoginsTable();
       // Auto-clean entries older than 3 days
       await this.cleanOldFarmerLogins();
 
@@ -852,6 +915,7 @@ class PostgresDB {
 
   async getFarmerLogins(limit = 50) {
     try {
+      await this.ensureFarmerLoginsTable();
       // Purge records older than 3 days automatically
       await this.cleanOldFarmerLogins();
 
@@ -882,8 +946,8 @@ class PostgresDB {
         village: r.village || 'پل 88، کوٹ ادو'
       }));
     } catch (e) {
-      console.warn('getFarmerLogins DB warning:', e.message);
-      return [];
+      console.warn('getFarmerLogins DB warning, fallback to localDb:', e.message);
+      return localDb.getFarmerLogins(limit);
     }
   }
 
@@ -963,7 +1027,12 @@ class PostgresDB {
     if (!identifier || !password) {
       return { error: 'موبائل نمبر / شناختی کارڈ اور پاس ورڈ درج کرنا لازمی ہے۔' };
     }
-    const farmer = await this.findFarmerByPhoneOrId(identifier);
+    let farmer = null;
+    try {
+      farmer = await this.findFarmerByPhoneOrId(identifier);
+    } catch (e) {
+      farmer = localDb.findFarmerByPhoneOrId(identifier);
+    }
     if (!farmer) {
       return { error: 'اس نمبر یا شناختی کارڈ پر کوئی کسان رجسٹرڈ نہیں ہے۔ براہ کرم پہلے "نیا اکاؤنٹ بنائیں" پر کلک کر کے سائن اپ کریں۔' };
     }
@@ -972,7 +1041,7 @@ class PostgresDB {
       return { error: 'آپ کا کھاتہ سسٹم میں موجود ہے لیکن آن لائن پاس ورڈ سیٹ نہیں ہے۔ برائے مہربانی "نیا اکاؤنٹ بنائیں" منتخب کر کے پاس ورڈ سیٹ کریں۔' };
     }
 
-    if (farmer.password.trim() !== password.trim()) {
+    if (String(farmer.password).trim() !== String(password).trim()) {
       return { error: 'درج کردہ پاس ورڈ درست نہیں ہے۔ دوبارہ چیک کر کے کوشش کریں۔' };
     }
 
@@ -1000,13 +1069,17 @@ class PostgresDB {
       transactions: farmer.transactions || []
     };
 
-    await this.recordFarmerLogin({
-      farmerId: farmer.id,
-      farmerName: farmer.name,
-      mobile: farmer.mobile || farmer.cnic || identifier,
-      password: farmer.password || password,
-      method: 'Password'
-    });
+    try {
+      await this.recordFarmerLogin({
+        farmerId: farmer.id,
+        farmerName: farmer.name,
+        mobile: farmer.mobile || farmer.cnic || identifier,
+        password: farmer.password || password,
+        method: 'Password'
+      });
+    } catch (recErr) {
+      console.warn('recordFarmerLogin non-fatal warning:', recErr.message);
+    }
 
     return {
       success: true,
@@ -1162,129 +1235,178 @@ class PostgresDB {
 
   // --- 6. Trade Requests ---
   async getTradeRequests() {
-    const res = await this.query('SELECT * FROM trade_requests ORDER BY created_at DESC');
-    return res.rows.map(r => ({
-      id: r.id,
-      farmerName: r.farmer_name,
-      mobile: r.mobile,
-      village: r.village,
-      cropName: r.crop_name,
-      quantity: r.quantity,
-      type: r.type,
-      expectedPrice: r.expected_price,
-      status: r.status,
-      notes: r.notes,
-      createdAt: r.created_at
-    }));
+    try {
+      const res = await this.query('SELECT * FROM trade_requests ORDER BY created_at DESC');
+      return res.rows.map(r => ({
+        id: r.id,
+        farmerName: r.farmer_name,
+        mobile: r.mobile,
+        village: r.village,
+        cropName: r.crop_name,
+        quantity: r.quantity,
+        type: r.type,
+        expectedPrice: r.expected_price,
+        status: r.status,
+        notes: r.notes,
+        createdAt: r.created_at
+      }));
+    } catch (err) {
+      console.warn('Postgres getTradeRequests error, fallback to localDb:', err.message);
+      return localDb.getTradeRequests();
+    }
   }
 
   async addTradeRequest(reqData) {
     const newId = "REQ-" + Date.now().toString().slice(-6);
     const today = new Date().toLocaleDateString('en-GB');
 
-    await this.query(`
-      INSERT INTO trade_requests (id, farmer_name, mobile, village, crop_name, quantity, type, expected_price, notes, status, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending', $10)
-    `, [
-      newId,
-      reqData.farmerName || "",
-      reqData.mobile || "",
-      reqData.village || "",
-      reqData.cropName || "",
-      reqData.quantity || "",
-      reqData.type || "sell_crop",
-      reqData.expectedPrice || "",
-      reqData.notes || "",
-      today
-    ]);
+    try {
+      await this.query(`
+        INSERT INTO trade_requests (id, farmer_name, mobile, village, crop_name, quantity, type, expected_price, notes, status, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending', $10)
+      `, [
+        newId,
+        reqData.farmerName || "",
+        reqData.mobile || "",
+        reqData.village || "",
+        reqData.cropName || "",
+        reqData.quantity || "",
+        reqData.type || "sell_crop",
+        reqData.expectedPrice || "",
+        reqData.notes || "",
+        today
+      ]);
 
-    const all = await this.getTradeRequests();
-    return all.find(r => r.id === newId);
+      const all = await this.getTradeRequests();
+      return all.find(r => r.id === newId) || { id: newId, ...reqData };
+    } catch (e) {
+      console.warn('addTradeRequest postgres error, using localDb:', e.message);
+      return localDb.addTradeRequest(reqData);
+    }
   }
 
   async updateTradeRequestStatus(id, status) {
-    await this.query('UPDATE trade_requests SET status = $1 WHERE id = $2', [status, id]);
-    const all = await this.getTradeRequests();
-    return all.find(r => r.id === id) || null;
+    try {
+      await this.query('UPDATE trade_requests SET status = $1 WHERE id = $2', [status, id]);
+    } catch (e) {}
+    try {
+      const all = await this.getTradeRequests();
+      return all.find(r => r.id === id) || null;
+    } catch (e) {
+      return localDb.updateTradeRequestStatus(id, status);
+    }
   }
 
   async deleteTradeRequest(id) {
-    await this.query('DELETE FROM trade_requests WHERE id = $1', [id]);
+    try {
+      await this.query('DELETE FROM trade_requests WHERE id = $1', [id]);
+    } catch (e) {}
     return true;
   }
 
   // --- 7. Admin Statistics ---
   async getStats() {
-    const [farmers, products, requests, rates] = await Promise.all([
-      this.getFarmers(),
-      this.getProducts(),
-      this.getTradeRequests(),
-      this.getRates()
-    ]);
-
-    let totalReceivable = 0;
-    let totalPayable = 0;
-    farmers.forEach(f => {
-      const bal = Number(f.currentBalance) || 0;
-      if (bal > 0) totalReceivable += bal;
-      if (bal < 0) totalPayable += Math.abs(bal);
-    });
-
-    const pendingRequests = requests.filter(r => r.status === 'Pending').length;
-
-    let pendingComplaints = 0;
     try {
-      const cRes = await this.query("SELECT COUNT(*) FROM complaints WHERE status = 'Pending'");
-      pendingComplaints = parseInt(cRes.rows[0].count, 10) || 0;
-    } catch (e) {}
+      const [farmers, products, requests, rates] = await Promise.all([
+        this.getFarmers().catch(e => { console.warn('getFarmers in getStats error:', e.message); return localDb.getFarmers(); }),
+        this.getProducts().catch(e => { console.warn('getProducts in getStats error:', e.message); return localDb.getProducts(); }),
+        this.getTradeRequests().catch(e => { console.warn('getTradeRequests in getStats error:', e.message); return localDb.getTradeRequests(); }),
+        this.getRates().catch(e => { console.warn('getRates in getStats error:', e.message); return localDb.getRates(); })
+      ]);
 
-    let pendingPassReqs = 0;
-    try {
-      const pRes = await this.query("SELECT COUNT(*) FROM password_requests WHERE status = 'Pending'");
-      pendingPassReqs = parseInt(pRes.rows[0].count, 10) || 0;
-    } catch (e) {}
+      let totalReceivable = 0;
+      let totalPayable = 0;
+      (farmers || []).forEach(f => {
+        const bal = Number(f.currentBalance) || 0;
+        if (bal > 0) totalReceivable += bal;
+        if (bal < 0) totalPayable += Math.abs(bal);
+      });
 
-    let payables = [];
-    try {
-      payables = await this.getFarmerPayables();
-    } catch(e) {
-      payables = localDb.getFarmerPayables();
-    }
+      const pendingRequests = (requests || []).filter(r => r.status === 'Pending').length;
 
-    let totalPayablesRemaining = 0;
-    let cropPayablesRemaining = 0;
-    let otherPayablesRemaining = 0;
+      let pendingComplaints = 0;
+      try {
+        await this.ensureComplaintsTable();
+        const cRes = await this.query("SELECT COUNT(*) FROM complaints WHERE status = 'Pending'");
+        pendingComplaints = parseInt(cRes.rows[0].count, 10) || 0;
+      } catch (e) {}
 
-    payables.forEach(p => {
-      const rem = Number(p.remainingAmount !== undefined ? p.remainingAmount : p.remainingBalance) || 0;
-      totalPayablesRemaining += rem;
-      if ((p.type || 'crop') === 'crop') {
-        cropPayablesRemaining += rem;
-      } else {
-        otherPayablesRemaining += rem;
+      let pendingPassReqs = 0;
+      try {
+        await this.ensurePasswordRequestsTable();
+        const pRes = await this.query("SELECT COUNT(*) FROM password_requests WHERE status = 'Pending'");
+        pendingPassReqs = parseInt(pRes.rows[0].count, 10) || 0;
+      } catch (e) {}
+
+      let payables = [];
+      try {
+        payables = await this.getFarmerPayables();
+      } catch(e) {
+        payables = localDb.getFarmerPayables();
       }
-    });
 
-    return {
-      totalFarmers: farmers.length,
-      totalReceivable,
-      totalPayable,
-      totalPayablesRemaining,
-      cropPayablesRemaining,
-      otherPayablesRemaining,
-      totalPayablesCount: payables.length,
-      totalProducts: products.length,
-      totalRequests: requests.length,
-      pendingRequests,
-      pendingComplaints,
-      pendingPassReqs,
-      activeRatesCount: rates.length
-    };
+      let totalPayablesRemaining = 0;
+      let cropPayablesRemaining = 0;
+      let otherPayablesRemaining = 0;
+
+      (payables || []).forEach(p => {
+        const rem = Number(p.remainingAmount !== undefined ? p.remainingAmount : p.remainingBalance) || 0;
+        totalPayablesRemaining += rem;
+        if ((p.type || 'crop') === 'crop') {
+          cropPayablesRemaining += rem;
+        } else {
+          otherPayablesRemaining += rem;
+        }
+      });
+
+      return {
+        totalFarmers: (farmers || []).length,
+        totalReceivable,
+        totalPayable,
+        totalPayablesRemaining,
+        cropPayablesRemaining,
+        otherPayablesRemaining,
+        totalPayablesCount: (payables || []).length,
+        totalProducts: (products || []).length,
+        totalRequests: (requests || []).length,
+        pendingRequests,
+        pendingComplaints,
+        pendingPassReqs,
+        activeRatesCount: (rates || []).length
+      };
+    } catch (err) {
+      console.warn('getStats fatal error, fallback to localDb:', err.message);
+      return localDb.getStats();
+    }
   }
 
   // --- 8. Complaints Box ---
+  async ensureComplaintsTable() {
+    if (this._ensuredComplaintsTable) return;
+    try {
+      await this.query(`
+        CREATE TABLE IF NOT EXISTS complaints (
+          id VARCHAR(50) PRIMARY KEY,
+          farmer_id VARCHAR(50),
+          farmer_name VARCHAR(255),
+          mobile VARCHAR(50),
+          category VARCHAR(100) DEFAULT 'عام شکایت',
+          message TEXT,
+          image_url TEXT,
+          status VARCHAR(50) DEFAULT 'Pending',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_complaints_created ON complaints(created_at);
+      `);
+      this._ensuredComplaintsTable = true;
+    } catch (e) {
+      console.warn('ensureComplaintsTable notice:', e.message);
+    }
+  }
+
   async getComplaints() {
     try {
+      await this.ensureComplaintsTable();
       const res = await this.query('SELECT * FROM complaints ORDER BY created_at DESC');
       return res.rows.map(r => ({
         id: r.id,
@@ -1298,14 +1420,15 @@ class PostgresDB {
         createdAt: r.created_at
       }));
     } catch (e) {
-      console.warn('getComplaints warning:', e.message);
-      return [];
+      console.warn('getComplaints warning, fallback to localDb:', e.message);
+      return localDb.getComplaints();
     }
   }
 
   async addComplaint(data) {
     const newId = "CMP-" + Date.now().toString().slice(-6);
     try {
+      await this.ensureComplaintsTable();
       await this.query(`
         INSERT INTO complaints (id, farmer_id, farmer_name, mobile, category, message, image_url, status, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'Pending', NOW())
@@ -1321,29 +1444,58 @@ class PostgresDB {
       const all = await this.getComplaints();
       return all.find(c => c.id === newId) || { id: newId, ...data };
     } catch (e) {
-      console.warn('addComplaint warning:', e.message);
-      return { id: newId, ...data };
+      console.warn('addComplaint warning, using localDb:', e.message);
+      return localDb.addComplaint(data);
     }
   }
 
   async updateComplaintStatus(id, status) {
     try {
+      await this.ensureComplaintsTable();
       await this.query('UPDATE complaints SET status = $1 WHERE id = $2', [status, id]);
     } catch (e) {}
-    const all = await this.getComplaints();
-    return all.find(c => c.id === id) || null;
+    try {
+      const all = await this.getComplaints();
+      return all.find(c => c.id === id) || null;
+    } catch (e) {
+      return localDb.updateComplaintStatus(id, status);
+    }
   }
 
   async deleteComplaint(id) {
     try {
+      await this.ensureComplaintsTable();
       await this.query('DELETE FROM complaints WHERE id = $1', [id]);
     } catch (e) {}
     return true;
   }
 
   // --- 9. Forgot Password Requests ---
+  async ensurePasswordRequestsTable() {
+    if (this._ensuredPasswordRequestsTable) return;
+    try {
+      await this.query(`
+        CREATE TABLE IF NOT EXISTS password_requests (
+          id VARCHAR(50) PRIMARY KEY,
+          farmer_id VARCHAR(50),
+          farmer_name VARCHAR(255),
+          mobile VARCHAR(50),
+          message TEXT,
+          current_password VARCHAR(255),
+          status VARCHAR(50) DEFAULT 'Pending',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_pwd_req_created ON password_requests(created_at);
+      `);
+      this._ensuredPasswordRequestsTable = true;
+    } catch (e) {
+      console.warn('ensurePasswordRequestsTable notice:', e.message);
+    }
+  }
+
   async getPasswordRequests() {
     try {
+      await this.ensurePasswordRequestsTable();
       const res = await this.query('SELECT * FROM password_requests ORDER BY created_at DESC');
       return res.rows.map(r => ({
         id: r.id,
@@ -1356,17 +1508,22 @@ class PostgresDB {
         createdAt: r.created_at
       }));
     } catch (e) {
-      console.warn('getPasswordRequests warning:', e.message);
-      return [];
+      console.warn('getPasswordRequests warning, fallback to localDb:', e.message);
+      return localDb.getPasswordRequests();
     }
   }
 
   async addPasswordRequest(data) {
     const newId = "PWR-" + Date.now().toString().slice(-6);
     let farmer = null;
-    if (data.identifier) farmer = await this.findFarmerByPhoneOrId(data.identifier);
+    if (data.identifier) {
+      try {
+        farmer = await this.findFarmerByPhoneOrId(data.identifier);
+      } catch (e) {}
+    }
 
     try {
+      await this.ensurePasswordRequestsTable();
       await this.query(`
         INSERT INTO password_requests (id, farmer_id, farmer_name, mobile, message, current_password, status, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'Pending', NOW())
@@ -1381,17 +1538,22 @@ class PostgresDB {
       const all = await this.getPasswordRequests();
       return all.find(p => p.id === newId) || { id: newId, ...data };
     } catch (e) {
-      console.warn('addPasswordRequest warning:', e.message);
-      return { id: newId, ...data };
+      console.warn('addPasswordRequest warning, using localDb:', e.message);
+      return localDb.addPasswordRequest(data);
     }
   }
 
   async updatePasswordRequestStatus(id, status) {
     try {
+      await this.ensurePasswordRequestsTable();
       await this.query('UPDATE password_requests SET status = $1 WHERE id = $2', [status, id]);
     } catch (e) {}
-    const all = await this.getPasswordRequests();
-    return all.find(p => p.id === id) || null;
+    try {
+      const all = await this.getPasswordRequests();
+      return all.find(p => p.id === id) || null;
+    } catch (e) {
+      return localDb.updatePasswordRequestStatus(id, status);
+    }
   }
 
   // --- 10. Farmer Payables (کسان کو دینے والے پیسے: گندم، چاول، تل، سورج مکھی، سرسوں و دیگر) ---

@@ -1,3 +1,13 @@
+// --- Global Process Crash Protectors ---
+// Intercepts any unhandled exceptions or rejected promises so Render never crashes with status 1
+process.on('uncaughtException', (err) => {
+  console.error('🛡️ Uncaught Exception intercepted safely (Server kept running):', (err && err.stack) || err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🛡️ Unhandled Rejection intercepted safely (Server kept running):', reason);
+});
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -71,14 +81,29 @@ const MIME_TYPES = {
 // Survives Render cloud restarts; 7 days session lifetime
 const adminSessions = new Map();
 const revokedTokens = new Set();
+const SESSION_MAX_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000; // 7 days session lifetime
+const SESSION_IDLE_TIMEOUT_MS = 24 * 60 * 60 * 1000;     // 24 hours idle timeout
 const AUTH_SECRET = process.env.SESSION_SECRET || 'hzm_auth_secret_key_haroon_zarai_markaz_kot_addu_5711';
+
+// Safe timing-safe comparison helper preventing uncaught byte length errors
+function safeTimingSafeEqual(a, b) {
+  try {
+    if (!a || !b) return false;
+    const bufA = Buffer.isBuffer(a) ? a : Buffer.from(String(a));
+    const bufB = Buffer.isBuffer(b) ? b : Buffer.from(String(b));
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch (e) {
+    return false;
+  }
+}
 
 function createAdminSession(ip = '') {
   const now = Date.now();
   const payload = {
     sub: 'admin',
     iat: now,
-    exp: now + 7 * 24 * 60 * 60 * 1000 // 7 days session lifetime
+    exp: now + SESSION_MAX_LIFETIME_MS
   };
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const hmac = crypto.createHmac('sha256', AUTH_SECRET).update(payloadB64).digest('base64url');
@@ -99,7 +124,7 @@ function isValidAdminSession(token) {
   const session = adminSessions.get(token);
   if (session) {
     const now = Date.now();
-    if (now - session.createdAt > 7 * 24 * 60 * 60 * 1000) {
+    if (now - session.createdAt > SESSION_MAX_LIFETIME_MS) {
       adminSessions.delete(token);
       return false;
     }
@@ -116,8 +141,7 @@ function isValidAdminSession(token) {
     const payloadB64 = raw.slice(0, dotIdx);
     const sig = raw.slice(dotIdx + 1);
     const expectedSig = crypto.createHmac('sha256', AUTH_SECRET).update(payloadB64).digest('base64url');
-    if (sig.length !== expectedSig.length) return false;
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return false;
+    if (!safeTimingSafeEqual(sig, expectedSig)) return false;
 
     const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
     const now = Date.now();
@@ -206,9 +230,13 @@ function clearFailedLogins(key) {
 // Constant-time string comparison to prevent timing side-channel attacks
 function timingSafeEqualStr(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const hashA = crypto.createHash('sha256').update(Buffer.from(a, 'utf8')).digest();
-  const hashB = crypto.createHash('sha256').update(Buffer.from(b, 'utf8')).digest();
-  return crypto.timingSafeEqual(hashA, hashB);
+  try {
+    const hashA = crypto.createHash('sha256').update(Buffer.from(a, 'utf8')).digest();
+    const hashB = crypto.createHash('sha256').update(Buffer.from(b, 'utf8')).digest();
+    return crypto.timingSafeEqual(hashA, hashB);
+  } catch (e) {
+    return false;
+  }
 }
 
 // Enterprise HTTP Security Headers (OWASP Top 10 Defenses)
@@ -361,8 +389,9 @@ function serveStatic(req, res, parsedUrl) {
 
 // Main HTTP request router
 const server = http.createServer(async (req, res) => {
-  // Handle CORS Preflight
-  if (req.method === 'OPTIONS') {
+  try {
+    // Handle CORS Preflight
+    if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -557,7 +586,7 @@ const server = http.createServer(async (req, res) => {
         const sig = raw.slice(dotIdx + 1);
         const expectedSig = crypto.createHmac('sha256', AUTH_SECRET).update(`bio_${payloadB64}`).digest('base64url');
 
-        if (sig.length !== expectedSig.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+        if (!safeTimingSafeEqual(sig, expectedSig)) {
           recordFailedLogin('admin_bio_' + clientIp, 5, 15 * 60 * 1000);
           return sendJson(res, 401, { success: false, message: 'غیر تصدیق شدہ فنگر پرنٹ ٹوکن! سیکیورٹی تصدیق ناکام۔' });
         }
@@ -1373,7 +1402,13 @@ const server = http.createServer(async (req, res) => {
       // 9. Admin Stats
       if (pathname === '/api/admin/stats' && method === 'GET') {
         if (!checkAdminAuth(req)) return sendJson(res, 403, { error: 'Unauthorized' });
-        return sendJson(res, 200, await db.getStats());
+        let stats;
+        try {
+          stats = await db.getStats();
+        } catch (e) {
+          stats = localDb.getStats();
+        }
+        return sendJson(res, 200, stats || {});
       }
 
       // 10. Admin Farmer Logins Activity (Automatically purges records older than 3 days)
@@ -1595,6 +1630,15 @@ const server = http.createServer(async (req, res) => {
 
   // Serve static files
   serveStatic(req, res, parsedUrl);
+  } catch (fatalServerErr) {
+    console.error('Fatal Server Request Error caught safely:', fatalServerErr);
+    try {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'Server internal error', message: fatalServerErr.message }));
+      }
+    } catch (e) {}
+  }
 });
 
 // Start listening
@@ -1624,16 +1668,20 @@ server.listen(PORT, '0.0.0.0', () => {
 
   // Periodically purge expired admin sessions and stale rate limiter entries (every 15 minutes)
   setInterval(() => {
-    const now = Date.now();
-    for (const [token, s] of adminSessions.entries()) {
-      if (now - s.createdAt > SESSION_MAX_LIFETIME_MS || now - s.lastActiveAt > SESSION_IDLE_TIMEOUT_MS) {
-        adminSessions.delete(token);
+    try {
+      const now = Date.now();
+      for (const [token, s] of adminSessions.entries()) {
+        if (!s || (now - s.createdAt > SESSION_MAX_LIFETIME_MS) || (now - s.lastActiveAt > SESSION_IDLE_TIMEOUT_MS)) {
+          adminSessions.delete(token);
+        }
       }
-    }
-    for (const [key, rec] of loginAttempts.entries()) {
-      if ((rec.blockedUntil && now > rec.blockedUntil) || (!rec.blockedUntil && now - rec.firstAttemptAt > 30 * 60 * 1000)) {
-        loginAttempts.delete(key);
+      for (const [key, rec] of loginAttempts.entries()) {
+        if (!rec || (rec.blockedUntil && now > rec.blockedUntil) || (!rec.blockedUntil && now - rec.firstAttemptAt > 30 * 60 * 1000)) {
+          loginAttempts.delete(key);
+        }
       }
+    } catch (cleanupErr) {
+      console.warn('Background cleanup interval error:', cleanupErr.message);
     }
   }, 15 * 60 * 1000);
 });

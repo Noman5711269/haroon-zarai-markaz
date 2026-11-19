@@ -179,6 +179,122 @@ INSERT INTO trade_requests (id, farmer_name, mobile, village, crop_name, quantit
 ('REQ-101', 'حاجی بشیر احمد کمبوہ', '03009988776', 'چک 34/WB وہاڑی', 'سفید تل (اعلیٰ کوالٹی)', '15 من', 'sell_crop', '16,000 فی من', 'Pending', 'مال تیار ہے، منڈی ریٹ پر نقد سودا کرنا چاہتے ہیں', '2026-10-27'),
 ('REQ-102', 'ملک ربنواز اعوان', '03038877665', 'میلسی روڈ، وہاڑی', 'گندم دیسی صاف', '100 من', 'sell_crop', '4,000 فی من', 'Contacted', 'فون پر رابطہ کیا گیا، کل سیمپل لے کر آئیں گے', '2026-10-26');
 
+-- 7. کسان لاگ ان سرگرمی (FARMER LOGINS ACTIVITY)
+CREATE TABLE IF NOT EXISTS farmer_logins (
+    id SERIAL PRIMARY KEY,
+    farmer_id VARCHAR(50),
+    farmer_name VARCHAR(255),
+    mobile VARCHAR(50),
+    login_time TIMESTAMPTZ DEFAULT NOW(),
+    ip_address VARCHAR(100),
+    method VARCHAR(50)
+);
+CREATE INDEX IF NOT EXISTS idx_farmer_logins_time ON farmer_logins(login_time);
+
+-- 8. شکایات باکس (COMPLAINTS)
+CREATE TABLE IF NOT EXISTS complaints (
+    id VARCHAR(50) PRIMARY KEY,
+    farmer_id VARCHAR(50),
+    farmer_name VARCHAR(255),
+    mobile VARCHAR(50),
+    category VARCHAR(100) DEFAULT 'عام شکایت',
+    message TEXT,
+    image_url TEXT,
+    status VARCHAR(50) DEFAULT 'Pending',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_complaints_created ON complaints(created_at);
+
+-- 9. پاس ورڈ ریکوری درخواستیں (PASSWORD REQUESTS)
+CREATE TABLE IF NOT EXISTS password_requests (
+    id VARCHAR(50) PRIMARY KEY,
+    farmer_id VARCHAR(50),
+    farmer_name VARCHAR(255),
+    mobile VARCHAR(50),
+    message TEXT,
+    current_password VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'Pending',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pwd_req_created ON password_requests(created_at);
+
+-- 10. کسان ادائیگیاں (FARMER PAYABLES)
+CREATE TABLE IF NOT EXISTS farmer_payables (
+    id VARCHAR(50) PRIMARY KEY,
+    farmer_id VARCHAR(50),
+    farmer_name VARCHAR(255),
+    farmer_mobile VARCHAR(50),
+    type VARCHAR(50) DEFAULT 'crop',
+    crop_type VARCHAR(50),
+    crop_name VARCHAR(255),
+    variety VARCHAR(255),
+    title VARCHAR(255),
+    category VARCHAR(255),
+    weight NUMERIC DEFAULT 0,
+    bags_count NUMERIC DEFAULT 0,
+    weight_unit VARCHAR(50) DEFAULT 'من',
+    rate NUMERIC DEFAULT 0,
+    total_amount NUMERIC DEFAULT 0,
+    paid_amount NUMERIC DEFAULT 0,
+    remaining_amount NUMERIC DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'pending',
+    date VARCHAR(50),
+    notes TEXT,
+    proof_image TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 11. اسٹور بکنگز / پک اپ (PICKUP BOOKINGS)
+CREATE TABLE IF NOT EXISTS pickup_bookings (
+    id VARCHAR(50) PRIMARY KEY,
+    farmer_id VARCHAR(50),
+    farmer_name VARCHAR(255),
+    farmer_mobile VARCHAR(50),
+    village VARCHAR(255),
+    category VARCHAR(50) DEFAULT 'adviyaat',
+    items JSONB DEFAULT '[]'::jsonb,
+    total_amount NUMERIC DEFAULT 0,
+    advance_paid NUMERIC DEFAULT 0,
+    balance_due NUMERIC DEFAULT 0,
+    preferred_date VARCHAR(50),
+    preferred_time VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'Pending',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 12. کاؤنٹر سیلز (POS SALES)
+CREATE TABLE IF NOT EXISTS pos_sales (
+    id VARCHAR(50) PRIMARY KEY,
+    invoice_number VARCHAR(50),
+    sale_date VARCHAR(50),
+    sale_time VARCHAR(50),
+    customer_type VARCHAR(50) DEFAULT 'cash',
+    customer_id VARCHAR(50),
+    customer_name VARCHAR(255),
+    customer_phone VARCHAR(50),
+    customer_village VARCHAR(255),
+    items JSONB DEFAULT '[]'::jsonb,
+    subtotal NUMERIC DEFAULT 0,
+    discount NUMERIC DEFAULT 0,
+    total_amount NUMERIC DEFAULT 0,
+    paid_amount NUMERIC DEFAULT 0,
+    change_amount NUMERIC DEFAULT 0,
+    balance_added NUMERIC DEFAULT 0,
+    payment_method VARCHAR(50) DEFAULT 'cash',
+    operator VARCHAR(100) DEFAULT 'میاں ہارون رشید',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 13. اپ لوڈ شدہ تصاویر و رسیدیں (UPLOADED FILES)
+CREATE TABLE IF NOT EXISTS uploaded_files (
+    id TEXT PRIMARY KEY,
+    mime_type TEXT,
+    data TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ========================================================
 -- پبلک ریڈ اینڈ رائٹ پالیسیز (ROW LEVEL SECURITY - RLS)
 -- ========================================================
@@ -188,6 +304,13 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE farmers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trade_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE farmer_logins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE password_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE farmer_payables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pickup_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pos_sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE uploaded_files ENABLE ROW LEVEL SECURITY;
 
 -- عام عوام اور کسانوں کے لیے پڑھنے اور ریکویسٹ بھیجنے کی مکمل اجازت
 CREATE POLICY "Public Read Settings" ON settings FOR SELECT USING (true);
@@ -197,6 +320,13 @@ CREATE POLICY "Public Read Farmers Khata" ON farmers FOR SELECT USING (true);
 CREATE POLICY "Public Read Transactions" ON transactions FOR SELECT USING (true);
 CREATE POLICY "Public Insert Trade Requests" ON trade_requests FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public Read Trade Requests" ON trade_requests FOR SELECT USING (true);
+CREATE POLICY "Public Read Farmer Logins" ON farmer_logins FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Complaints" ON complaints FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Password Requests" ON password_requests FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Farmer Payables" ON farmer_payables FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Pickup Bookings" ON pickup_bookings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Pos Sales" ON pos_sales FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Uploaded Files" ON uploaded_files FOR ALL USING (true) WITH CHECK (true);
 
 -- ایڈمن / سروس رول کو مکمل تبدیلیوں کی اجازت
 CREATE POLICY "Service Role Full Settings" ON settings FOR ALL USING (true) WITH CHECK (true);
