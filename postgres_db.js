@@ -28,7 +28,38 @@ class PostgresDB {
   constructor(connectionString) {
     this.rawConnString = connectionString || process.env.DATABASE_URL || '';
     this.pool = null;
+    this._cache = new Map();
     this.initPool();
+  }
+
+  // --- High-Performance In-Memory TTL Cache ---
+  getCache(key) {
+    const entry = this._cache.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this._cache.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  setCache(key, value, ttlMs = 20000) {
+    this._cache.set(key, {
+      value,
+      expiresAt: Date.now() + ttlMs
+    });
+  }
+
+  clearCache(prefix) {
+    if (!prefix) {
+      this._cache.clear();
+      return;
+    }
+    for (const k of Array.from(this._cache.keys())) {
+      if (k === prefix || k.startsWith(prefix)) {
+        this._cache.delete(k);
+      }
+    }
   }
 
   initPool() {
@@ -94,13 +125,15 @@ class PostgresDB {
     }
   }
 
-  // --- 1. Settings ---
+  // --- 1. Settings (Cached for 30s) ---
   async getSettings() {
+    const cached = this.getCache('settings');
+    if (cached) return cached;
     try {
       const res = await this.query('SELECT * FROM settings WHERE id = $1', ['main']);
       if (res.rows.length > 0) {
         const s = res.rows[0];
-        return {
+        const result = {
           businessName: s.business_name,
           businessNameEn: s.business_name_en,
           tagline: s.tagline,
@@ -115,11 +148,13 @@ class PostgresDB {
           urduFont: s.urdu_font || 'noto-sans',
           shopLogo: s.shop_logo || ''
         };
+        this.setCache('settings', result, 30000);
+        return result;
       }
     } catch (err) {
       console.error('getSettings error:', err.message);
     }
-    return {
+    const def = {
       businessName: "ہارون زرعی مرکز",
       businessNameEn: "HAROON ZARAI MARKAZ",
       tagline: "کسان کی خوشحالی، ہماری اولین ترجیح",
@@ -134,9 +169,12 @@ class PostgresDB {
       urduFont: "noto-sans",
       shopLogo: ""
     };
+    this.setCache('settings', def, 10000);
+    return def;
   }
 
   async updateSettings(data) {
+    this.clearCache('settings');
     try {
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_username TEXT DEFAULT 'admin';`);
       await this.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_password TEXT DEFAULT '5711Noman';`);
@@ -179,13 +217,16 @@ class PostgresDB {
       updated.adminUsername || 'admin',
       updated.shopLogo || ''
     ]);
+    this.clearCache('settings');
     return this.getSettings();
   }
 
-  // --- 2. Mandi Rates ---
+  // --- 2. Mandi Rates (Cached for 20s) ---
   async getRates() {
+    const cached = this.getCache('rates');
+    if (cached) return cached;
     const res = await this.query('SELECT * FROM mandi_rates ORDER BY created_at ASC');
-    return res.rows.map(r => ({
+    const result = res.rows.map(r => ({
       id: r.id,
       cropNameUrdu: r.crop_name_urdu,
       cropNameEn: r.crop_name_en,
@@ -196,6 +237,8 @@ class PostgresDB {
       lastUpdated: r.last_updated,
       notes: r.notes
     }));
+    this.setCache('rates', result, 20000);
+    return result;
   }
 
   async getRateById(id) {
@@ -216,6 +259,8 @@ class PostgresDB {
   }
 
   async addRate(rateData) {
+    this.clearCache('rates');
+    this.clearCache('stats');
     const id = "rate-" + Date.now();
     const today = new Date().toISOString().split('T')[0];
     await this.query(`
@@ -232,10 +277,14 @@ class PostgresDB {
       today,
       rateData.notes || ""
     ]);
+    this.clearCache('rates');
+    this.clearCache('stats');
     return this.getRateById(id);
   }
 
   async updateRate(id, rateData) {
+    this.clearCache('rates');
+    this.clearCache('stats');
     const current = await this.getRateById(id);
     if (!current) return null;
     const updated = { ...current, ...rateData };
@@ -262,58 +311,69 @@ class PostgresDB {
       updated.notes,
       id
     ]);
+    this.clearCache('rates');
+    this.clearCache('stats');
     return this.getRateById(id);
   }
 
   async deleteRate(id) {
+    this.clearCache('rates');
+    this.clearCache('stats');
     await this.query('DELETE FROM mandi_rates WHERE id = $1', [id]);
+    this.clearCache('rates');
+    this.clearCache('stats');
     return true;
   }
 
-  // --- 3. Products ---
+  // --- 3. Products (Cached for 30s) ---
   async getProducts(category, search) {
-    let sql = 'SELECT * FROM products';
-    const params = [];
-    if (category && category !== 'all') {
-      sql += ' WHERE category = $1';
-      params.push(category);
+    let prods = this.getCache('products_all');
+    if (!prods) {
+      const res = await this.query('SELECT * FROM products ORDER BY created_at DESC');
+      prods = res.rows.map(p => ({
+        id: p.id,
+        nameUrdu: p.name_urdu,
+        nameEn: p.name_en,
+        category: p.category,
+        categoryUrdu: p.category_urdu,
+        company: p.company,
+        packSize: p.pack_size,
+        price: Number(p.price),
+        stock: Number(p.stock),
+        description: p.description,
+        image: p.image,
+        featured: Boolean(p.featured),
+        activeIngredient: p.active_ingredient || "",
+        suitableCrops: p.suitable_crops || "",
+        targetPests: p.target_pests || "",
+        dosage: p.dosage || "",
+        precautions: p.precautions || ""
+      }));
+      this.setCache('products_all', prods, 30000);
     }
-    sql += ' ORDER BY created_at DESC';
 
-    const res = await this.query(sql, params);
-    let prods = res.rows.map(p => ({
-      id: p.id,
-      nameUrdu: p.name_urdu,
-      nameEn: p.name_en,
-      category: p.category,
-      categoryUrdu: p.category_urdu,
-      company: p.company,
-      packSize: p.pack_size,
-      price: Number(p.price),
-      stock: Number(p.stock),
-      description: p.description,
-      image: p.image,
-      featured: Boolean(p.featured),
-      activeIngredient: p.active_ingredient || "",
-      suitableCrops: p.suitable_crops || "",
-      targetPests: p.target_pests || "",
-      dosage: p.dosage || "",
-      precautions: p.precautions || ""
-    }));
-
+    let filtered = prods;
+    if (category && category !== 'all') {
+      filtered = filtered.filter(p => p.category === category);
+    }
     if (search && search.trim()) {
       const q = search.toLowerCase().trim();
-      prods = prods.filter(p => 
+      filtered = filtered.filter(p => 
         (p.nameUrdu && p.nameUrdu.toLowerCase().includes(q)) ||
         (p.nameEn && p.nameEn.toLowerCase().includes(q)) ||
         (p.company && p.company.toLowerCase().includes(q)) ||
         (p.description && p.description.toLowerCase().includes(q))
       );
     }
-    return prods;
+    return filtered;
   }
 
   async getProductById(id) {
+    const cached = this.getCache('products_all');
+    if (cached) {
+      const found = cached.find(p => p.id === id);
+      if (found) return found;
+    }
     const res = await this.query('SELECT * FROM products WHERE id = $1', [id]);
     if (res.rows.length === 0) return null;
     const p = res.rows[0];
@@ -339,6 +399,8 @@ class PostgresDB {
   }
 
   async addProduct(prodData) {
+    this.clearCache('products');
+    this.clearCache('stats');
     const id = "prod-" + Date.now();
     try {
       await this.query(`
@@ -386,6 +448,8 @@ class PostgresDB {
   }
 
   async updateProduct(id, prodData) {
+    this.clearCache('products');
+    this.clearCache('stats');
     const current = await this.getProductById(id);
     if (!current) return null;
     const updated = { ...current, ...prodData };
@@ -458,66 +522,77 @@ class PostgresDB {
         id
       ]);
     }
+    this.clearCache('products');
+    this.clearCache('stats');
     return this.getProductById(id);
   }
 
   async deleteProduct(id) {
+    this.clearCache('products');
+    this.clearCache('stats');
     await this.query('DELETE FROM products WHERE id = $1', [id]);
+    this.clearCache('products');
+    this.clearCache('stats');
     return true;
   }
 
-  // --- 4. Farmers & Khata Management ---
+  // --- 4. Farmers & Khata Management (Cached for 15s) ---
   async getFarmers(search) {
     try {
-      const fRes = await this.query('SELECT * FROM farmers ORDER BY id DESC');
-      let tRows = [];
-      try {
-        const tRes = await this.query('SELECT * FROM transactions ORDER BY date ASC, created_at ASC');
-        tRows = tRes.rows || [];
-      } catch (txErr) {
-        console.warn('transactions fetch warning in getFarmers:', txErr.message);
-      }
+      let farmers = this.getCache('farmers_all');
+      if (!farmers) {
+        const fRes = await this.query('SELECT * FROM farmers ORDER BY id DESC');
+        let tRows = [];
+        try {
+          const tRes = await this.query('SELECT * FROM transactions ORDER BY date ASC, created_at ASC');
+          tRows = tRes.rows || [];
+        } catch (txErr) {
+          console.warn('transactions fetch warning in getFarmers:', txErr.message);
+        }
 
-      const txMap = {};
-      for (const t of tRows) {
-        if (!txMap[t.farmer_id]) txMap[t.farmer_id] = [];
-        txMap[t.farmer_id].push({
-          id: t.id,
-          date: t.date,
-          type: t.type,
-          category: t.category,
-          productName: t.product_name,
-          quantity: t.quantity,
-          unitPrice: Number(t.unit_price) || 0,
-          description: t.description,
-          amount: Number(t.amount) || 0,
-          balanceAfter: Number(t.balance_after) || 0,
-          addedBy: t.added_by,
-          proofImage: t.proof_image || ""
-        });
-      }
+        const txMap = {};
+        for (const t of tRows) {
+          if (!txMap[t.farmer_id]) txMap[t.farmer_id] = [];
+          txMap[t.farmer_id].push({
+            id: t.id,
+            date: t.date,
+            type: t.type,
+            category: t.category,
+            productName: t.product_name,
+            quantity: t.quantity,
+            unitPrice: Number(t.unit_price) || 0,
+            description: t.description,
+            amount: Number(t.amount) || 0,
+            balanceAfter: Number(t.balance_after) || 0,
+            addedBy: t.added_by,
+            proofImage: t.proof_image || ""
+          });
+        }
 
-      let farmers = fRes.rows.map(f => ({
-        id: f.id,
-        name: f.name,
-        nameEn: f.name_en,
-        fatherName: f.father_name,
-        mobile: f.mobile,
-        cnic: f.cnic,
-        email: f.email || "",
-        password: f.password || "",
-        registered: Boolean(f.registered || f.password),
-        village: f.village,
-        landAcres: Number(f.land_acres) || 0,
-        currentBalance: Number(f.current_balance) || 0,
-        notes: f.notes,
-        createdAt: f.created_at,
-        transactions: txMap[f.id] || []
-      }));
+        farmers = fRes.rows.map(f => ({
+          id: f.id,
+          name: f.name,
+          nameEn: f.name_en,
+          fatherName: f.father_name,
+          mobile: f.mobile,
+          cnic: f.cnic,
+          email: f.email || "",
+          password: f.password || "",
+          registered: Boolean(f.registered || f.password),
+          village: f.village,
+          landAcres: Number(f.land_acres) || 0,
+          currentBalance: Number(f.current_balance) || 0,
+          notes: f.notes,
+          createdAt: f.created_at,
+          transactions: txMap[f.id] || []
+        }));
+
+        this.setCache('farmers_all', farmers, 15000);
+      }
 
       if (search && search.trim()) {
         const q = search.toLowerCase().trim();
-        farmers = farmers.filter(f => 
+        return farmers.filter(f => 
           (f.name && f.name.toLowerCase().includes(q)) ||
           (f.nameEn && f.nameEn.toLowerCase().includes(q)) ||
           (f.mobile && f.mobile.includes(q)) ||
@@ -622,7 +697,51 @@ class PostgresDB {
 
   async findFarmerByPhoneOrId(query) {
     if (!query) return null;
+    const qStr = query.toString().trim();
+    const qDigits = qStr.replace(/\D/g, '');
+    const qLower = qStr.toLowerCase();
+
     try {
+      // 1. If in-memory cache exists, find in memory immediately (0ms)
+      const cached = this.getCache('farmers_all');
+      if (cached && Array.isArray(cached)) {
+        const matched = cached.find(f => this.matchFarmer(f, query));
+        if (matched) return matched;
+      }
+
+      // 2. Targeted fast database query
+      let directRows = [];
+      if (qDigits && qDigits.length >= 7) {
+        const last7 = qDigits.slice(-7);
+        const fRes = await this.query(
+          `SELECT id FROM farmers 
+           WHERE LOWER(id) = $1 
+              OR LOWER(email) = $1 
+              OR mobile LIKE $2 
+              OR cnic LIKE $2
+           LIMIT 10`,
+          [qLower, `%${last7}%`]
+        );
+        directRows = fRes.rows || [];
+      } else {
+        const fRes = await this.query(
+          `SELECT id FROM farmers 
+           WHERE LOWER(id) = $1 
+              OR LOWER(email) = $1
+           LIMIT 5`,
+          [qLower]
+        );
+        directRows = fRes.rows || [];
+      }
+
+      for (const r of directRows) {
+        const fullFarmer = await this.getFarmerById(r.id);
+        if (fullFarmer && this.matchFarmer(fullFarmer, query)) {
+          return fullFarmer;
+        }
+      }
+
+      // 3. Fallback to full getFarmers
       const farmers = await this.getFarmers();
       const matched = (farmers || []).find(f => this.matchFarmer(f, query));
       if (matched) return matched;
@@ -633,6 +752,8 @@ class PostgresDB {
   }
 
   async addFarmer(farmerData) {
+    this.clearCache('farmers');
+    this.clearCache('stats');
     const farmers = await this.getFarmers();
     if (farmerData.mobile && String(farmerData.mobile).trim()) {
       const dup = farmers.find(f => isSameMobile(f.mobile, farmerData.mobile));
@@ -699,6 +820,8 @@ class PostgresDB {
   }
 
   async updateFarmer(id, farmerData) {
+    this.clearCache('farmers');
+    this.clearCache('stats');
     const current = await this.getFarmerById(id);
     if (!current) return null;
     if (farmerData.mobile && String(farmerData.mobile).trim()) {
@@ -745,10 +868,14 @@ class PostgresDB {
       id
     ]);
 
+    this.clearCache('farmers');
+    this.clearCache('stats');
     return this.getFarmerById(id);
   }
 
   async deleteFarmer(id) {
+    this.clearCache('farmers');
+    this.clearCache('stats');
     try {
       await this.query('DELETE FROM transactions WHERE farmer_id = $1', [id]);
       await this.query('DELETE FROM farmer_logins WHERE farmer_id = $1', [id]);
@@ -756,16 +883,24 @@ class PostgresDB {
     } catch (e) {
       await this.query('DELETE FROM farmers WHERE id = $1', [id]);
     }
+    this.clearCache('farmers');
+    this.clearCache('stats');
     return true;
   }
 
   async deregisterFarmer(id) {
+    this.clearCache('farmers');
+    this.clearCache('stats');
     await this.query('UPDATE farmers SET password = NULL, registered = FALSE WHERE id = $1', [id]);
+    this.clearCache('farmers');
+    this.clearCache('stats');
     return this.getFarmerById(id);
   }
 
   // --- 5. Transactions (Khata Ledger) ---
   async addTransaction(farmerId, txData) {
+    this.clearCache('farmers');
+    this.clearCache('stats');
     const farmer = await this.getFarmerById(farmerId);
     if (!farmer) return null;
 
@@ -1137,6 +1272,8 @@ class PostgresDB {
   }
 
   async deleteTransaction(farmerId, txId) {
+    this.clearCache('farmers');
+    this.clearCache('stats');
     const farmer = await this.getFarmerById(farmerId);
     if (!farmer) return null;
 
@@ -1152,6 +1289,8 @@ class PostgresDB {
     }
 
     await this.query('UPDATE farmers SET current_balance = $1 WHERE id = $2', [runningBalance, farmerId]);
+    this.clearCache('farmers');
+    this.clearCache('stats');
     return this.getFarmerById(farmerId);
   }
 
@@ -1233,11 +1372,13 @@ class PostgresDB {
     }
   }
 
-  // --- 6. Trade Requests ---
+  // --- 6. Trade Requests (Cached for 15s) ---
   async getTradeRequests() {
+    const cached = this.getCache('requests');
+    if (cached) return cached;
     try {
       const res = await this.query('SELECT * FROM trade_requests ORDER BY created_at DESC');
-      return res.rows.map(r => ({
+      const result = res.rows.map(r => ({
         id: r.id,
         farmerName: r.farmer_name,
         mobile: r.mobile,
@@ -1250,6 +1391,8 @@ class PostgresDB {
         notes: r.notes,
         createdAt: r.created_at
       }));
+      this.setCache('requests', result, 15000);
+      return result;
     } catch (err) {
       console.warn('Postgres getTradeRequests error, fallback to localDb:', err.message);
       return localDb.getTradeRequests();
@@ -1257,6 +1400,8 @@ class PostgresDB {
   }
 
   async addTradeRequest(reqData) {
+    this.clearCache('requests');
+    this.clearCache('stats');
     const newId = "REQ-" + Date.now().toString().slice(-6);
     const today = new Date().toLocaleDateString('en-GB');
 
@@ -1277,6 +1422,8 @@ class PostgresDB {
         today
       ]);
 
+      this.clearCache('requests');
+      this.clearCache('stats');
       const all = await this.getTradeRequests();
       return all.find(r => r.id === newId) || { id: newId, ...reqData };
     } catch (e) {
@@ -1286,9 +1433,13 @@ class PostgresDB {
   }
 
   async updateTradeRequestStatus(id, status) {
+    this.clearCache('requests');
+    this.clearCache('stats');
     try {
       await this.query('UPDATE trade_requests SET status = $1 WHERE id = $2', [status, id]);
     } catch (e) {}
+    this.clearCache('requests');
+    this.clearCache('stats');
     try {
       const all = await this.getTradeRequests();
       return all.find(r => r.id === id) || null;
@@ -1298,14 +1449,20 @@ class PostgresDB {
   }
 
   async deleteTradeRequest(id) {
+    this.clearCache('requests');
+    this.clearCache('stats');
     try {
       await this.query('DELETE FROM trade_requests WHERE id = $1', [id]);
     } catch (e) {}
+    this.clearCache('requests');
+    this.clearCache('stats');
     return true;
   }
 
-  // --- 7. Admin Statistics ---
+  // --- 7. Admin Statistics (Cached for 15s) ---
   async getStats() {
+    const cached = this.getCache('stats');
+    if (cached) return cached;
     try {
       const [farmers, products, requests, rates] = await Promise.all([
         this.getFarmers().catch(e => { console.warn('getFarmers in getStats error:', e.message); return localDb.getFarmers(); }),
@@ -1359,7 +1516,7 @@ class PostgresDB {
         }
       });
 
-      return {
+      const stats = {
         totalFarmers: (farmers || []).length,
         totalReceivable,
         totalPayable,
@@ -1374,6 +1531,8 @@ class PostgresDB {
         pendingPassReqs,
         activeRatesCount: (rates || []).length
       };
+      this.setCache('stats', stats, 15000);
+      return stats;
     } catch (err) {
       console.warn('getStats fatal error, fallback to localDb:', err.message);
       return localDb.getStats();

@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const localDb = require('./database');
 const SupabaseDB = require('./supabase_db');
 const PostgresDB = require('./postgres_db');
@@ -283,16 +284,37 @@ function parseJsonBody(req) {
   });
 }
 
-// Send JSON response
+// Send JSON response with optional gzip compression
 function sendJson(res, statusCode, data) {
   applySecurityHeaders(res);
-  res.writeHead(statusCode, {
+  const jsonStr = Buffer.from(JSON.stringify(data));
+  const req = res.req;
+  const acceptEncoding = (req && req.headers && req.headers['accept-encoding']) || '';
+
+  const headers = {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-admin-token'
-  });
-  res.end(JSON.stringify(data));
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-admin-token',
+    'Vary': 'Accept-Encoding'
+  };
+
+  // Compress payloads > 1KB when client supports gzip
+  if (jsonStr.length > 1024 && /\bgzip\b/i.test(acceptEncoding)) {
+    try {
+      const gzipped = zlib.gzipSync(jsonStr);
+      headers['Content-Encoding'] = 'gzip';
+      headers['Content-Length'] = gzipped.length;
+      res.writeHead(statusCode, headers);
+      return res.end(gzipped);
+    } catch (gzErr) {
+      // Fallback uncompressed
+    }
+  }
+
+  headers['Content-Length'] = jsonStr.length;
+  res.writeHead(statusCode, headers);
+  res.end(jsonStr);
 }
 
 // Check admin authorization: strictly requires valid, active, unexpired session token
@@ -321,7 +343,7 @@ function isSameMobile(m1, m2) {
   return s1 === s2;
 }
 
-// Static file server
+// Static file server with GZIP compression & long-lived browser caching headers
 function serveStatic(req, res, parsedUrl) {
   let pathname = parsedUrl.pathname;
   if (pathname === '/' || pathname === '') {
@@ -347,6 +369,8 @@ function serveStatic(req, res, parsedUrl) {
 
   fs.readFile(filePath, (err, content) => {
     applySecurityHeaders(res);
+    const acceptEncoding = (req.headers && req.headers['accept-encoding']) || '';
+
     if (err) {
       if (err.code === 'ENOENT') {
         // SPA fallback only for HTML page routes (never for assets or uploads)
@@ -354,8 +378,24 @@ function serveStatic(req, res, parsedUrl) {
         if (!pathname.startsWith('/api') && !isAsset) {
           const indexHtml = path.join(PUBLIC_DIR, 'index.html');
           if (fs.existsSync(indexHtml)) {
-            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-            return res.end(fs.readFileSync(indexHtml));
+            const htmlContent = fs.readFileSync(indexHtml);
+            const fbHeaders = {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=0, must-revalidate',
+              'Vary': 'Accept-Encoding'
+            };
+            if (htmlContent.length > 1024 && /\bgzip\b/i.test(acceptEncoding)) {
+              try {
+                const compressed = zlib.gzipSync(htmlContent);
+                fbHeaders['Content-Encoding'] = 'gzip';
+                fbHeaders['Content-Length'] = compressed.length;
+                res.writeHead(200, fbHeaders);
+                return res.end(compressed);
+              } catch (gz) {}
+            }
+            fbHeaders['Content-Length'] = htmlContent.length;
+            res.writeHead(200, fbHeaders);
+            return res.end(htmlContent);
           }
         }
         res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -373,15 +413,45 @@ function serveStatic(req, res, parsedUrl) {
       ? 'application/manifest+json; charset=utf-8'
       : (MIME_TYPES[ext] || 'application/octet-stream');
 
+    // Browser Cache Strategy:
+    // - Service worker must never be cached: no-cache, no-store
+    // - HTML files: public, max-age=0, must-revalidate (instant validation, always fresh HTML)
+    // - Manifest: 1 day
+    // - Static assets (JS, CSS, images, icons, fonts): 7 days (loads instantly in 0ms from disk cache)
+    let cacheControl = 'public, max-age=604800, stale-while-revalidate=86400';
+    if (basename === 'sw.js') {
+      cacheControl = 'no-cache, no-store, must-revalidate';
+    } else if (ext === '.html' || ext === '') {
+      cacheControl = 'public, max-age=0, must-revalidate';
+    } else if (basename === 'manifest.json' || ext === '.webmanifest') {
+      cacheControl = 'public, max-age=86400';
+    }
+
     const headers = {
       'Content-Type': contentType,
-      'Cache-Control': basename === 'sw.js' ? 'no-cache, no-store, must-revalidate' : 'no-cache'
+      'Cache-Control': cacheControl,
+      'Vary': 'Accept-Encoding'
     };
 
     if (basename === 'sw.js') {
       headers['Service-Worker-Allowed'] = '/';
     }
 
+    // GZIP compression for text, code, SVG, and JSON assets > 1KB
+    const isCompressible = /^(text\/|application\/(javascript|json|manifest\+json|xml)|image\/svg\+xml)/i.test(contentType);
+    if (isCompressible && content.length > 1024 && /\bgzip\b/i.test(acceptEncoding)) {
+      try {
+        const compressed = zlib.gzipSync(content);
+        headers['Content-Encoding'] = 'gzip';
+        headers['Content-Length'] = compressed.length;
+        res.writeHead(200, headers);
+        return res.end(compressed);
+      } catch (gzErr) {
+        // Fallback uncompressed
+      }
+    }
+
+    headers['Content-Length'] = content.length;
     res.writeHead(200, headers);
     res.end(content);
   });
@@ -389,6 +459,7 @@ function serveStatic(req, res, parsedUrl) {
 
 // Main HTTP request router
 const server = http.createServer(async (req, res) => {
+  res.req = req;
   try {
     // Handle CORS Preflight
     if (req.method === 'OPTIONS') {
