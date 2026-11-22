@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /mandi
+Allow: /adviyaat
+Allow: /khata
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/admin/
+Disallow: /api/auth/
+Disallow: /font-preview.html
+
+Sitemap: https://haroon-zarai-markaz.onrender.com/sitemap.xml

@@ -74,7 +74,9 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf'
+  '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8'
 };
 
 // --- Security & Session Management ---
@@ -374,7 +376,7 @@ function serveStatic(req, res, parsedUrl) {
     if (err) {
       if (err.code === 'ENOENT') {
         // SPA fallback only for HTML page routes (never for assets or uploads)
-        const isAsset = /\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot|map|json)$/i.test(pathname) || pathname.startsWith('/uploads/');
+        const isAsset = /\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot|map|json|txt|xml)$/i.test(pathname) || pathname.startsWith('/uploads/');
         if (!pathname.startsWith('/api') && !isAsset) {
           const indexHtml = path.join(PUBLIC_DIR, 'index.html');
           if (fs.existsSync(indexHtml)) {
@@ -416,14 +418,14 @@ function serveStatic(req, res, parsedUrl) {
     // Browser Cache Strategy:
     // - Service worker must never be cached: no-cache, no-store
     // - HTML files: public, max-age=0, must-revalidate (instant validation, always fresh HTML)
-    // - Manifest: 1 day
+    // - Manifest, robots.txt, sitemap.xml: 1 day
     // - Static assets (JS, CSS, images, icons, fonts): 7 days (loads instantly in 0ms from disk cache)
     let cacheControl = 'public, max-age=604800, stale-while-revalidate=86400';
     if (basename === 'sw.js') {
       cacheControl = 'no-cache, no-store, must-revalidate';
     } else if (ext === '.html' || ext === '') {
       cacheControl = 'public, max-age=0, must-revalidate';
-    } else if (basename === 'manifest.json' || ext === '.webmanifest') {
+    } else if (basename === 'manifest.json' || ext === '.webmanifest' || basename === 'robots.txt' || basename === 'sitemap.xml') {
       cacheControl = 'public, max-age=86400';
     }
 
